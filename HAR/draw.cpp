@@ -24,8 +24,6 @@ void OpenGLHelper::endFrame()
 //
 namespace
 {
-    gfx::Texture rgbTex, depthTex;
-
     template <typename EnumType>
     void doTabButton(const char *name, EnumType &variable, const EnumType value)
     {
@@ -48,11 +46,6 @@ namespace
 
 void GUIHelper::init()
 {
-    cv::Mat rgb = cv::imread("data/checker-rgb.jpg");
-    cv::Mat depth = cv::imread("data/checker.png");
-    
-    rgbTex = gfx::Texture(rgb);
-    depthTex = gfx::Texture(depth);
 }
 
 void GUIHelper::beginFrame(const ImVec2 &windowSize)
@@ -65,7 +58,7 @@ void GUIHelper::endFrame()
 }
 
 
-void GUIHelper::doMainContent(gfx::Texture *depthTexture)
+void GUIHelper::doMainContent(gfx::Texture *depthTexture, gfx::Texture *rgbTexture)
 {
 // Top BAR
     {
@@ -92,11 +85,11 @@ void GUIHelper::doMainContent(gfx::Texture *depthTexture)
             switch(currentMainPanelTab)
             {
             case MainPanelTab::RGB:
-                tex = reinterpret_cast<void *>(rgbTex.platformHandle());
+                tex = reinterpret_cast<void *>(rgbTexture->platformHandle());
                 break;
 
             case MainPanelTab::DEPTH:
-                    tex = reinterpret_cast<void *>(depthTexture->platformHandle()); //reinterpret_cast<void *>(depthTex.platformHandle());
+                tex = reinterpret_cast<void *>(depthTexture->platformHandle());
                 break;
             };
             

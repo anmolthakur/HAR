@@ -15,6 +15,7 @@ class Application
     OpenGLHelper ogl;
     GUIHelper gui;
     gfx::DepthVisualization depthViz;
+    gfx::RGBFeed rgbFeed;
     
 private:
     void drawFunction(window::Layer layer);
@@ -71,6 +72,7 @@ void Application::drawFunction(window::Layer layer)
         ogl.beginFrame();
         {
             depthViz.update();
+            rgbFeed.update();
         }
         ogl.endFrame();
         break;
@@ -78,7 +80,7 @@ void Application::drawFunction(window::Layer layer)
     case window::Layer::GUI:
         gui.beginFrame(window::windowSize(gWindowName));
         {
-            gui.doMainContent(depthViz.getTexture());
+            gui.doMainContent(depthViz.getTexture(), rgbFeed.getTexture());
             gui.doLeftPanel();
             gui.doRightPanel();
             gui.doBottomPanel();

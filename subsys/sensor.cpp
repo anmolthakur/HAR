@@ -6,6 +6,7 @@ namespace
     xn::ScriptNode g_scriptNode;
     xn::DepthGenerator g_DepthGenerator;
     xn::UserGenerator g_UserGenerator;
+    xn::ImageGenerator g_ImageGenerator;
     xn::Player g_Player;
     
     XnBool g_bNeedPose = FALSE;
@@ -179,6 +180,14 @@ namespace
             CHECK_RC(nRetVal, "Find user generator");
         }
         
+        nRetVal = g_Context.FindExistingNode(XN_NODE_TYPE_IMAGE, g_ImageGenerator);
+        if (nRetVal != XN_STATUS_OK)
+        {
+            nRetVal = g_ImageGenerator.Create(g_Context);
+            CHECK_RC(nRetVal, "Find image generator..... HELP!!! ");
+        }
+
+        
         
         XnCallbackHandle hUserCallbacks, hCalibrationStart, hCalibrationComplete, hPoseDetected, hCalibrationInProgress, hPoseInProgress;
         if (!g_UserGenerator.IsCapabilitySupported(XN_CAPABILITY_SKELETON))
@@ -228,6 +237,7 @@ namespace
         g_scriptNode.Release();
         g_DepthGenerator.Release();
         g_UserGenerator.Release();
+        g_ImageGenerator.Release();
         g_Player.Release();
         g_Context.Release();
     }
@@ -257,7 +267,8 @@ namespace sensor
     
     void updateAll()
     {
-        g_Context.WaitOneUpdateAll(g_UserGenerator);
+        g_Context.WaitAnyUpdateAll();
+        //g_Context.WaitOneUpdateAll(g_UserGenerator);
     }
     
     xn::DepthGenerator &depthGenerator()
@@ -270,4 +281,8 @@ namespace sensor
         return g_UserGenerator;
     }
     
+    xn::ImageGenerator &imageGenerator()
+    {
+        return g_ImageGenerator;
+    }
 }

@@ -293,6 +293,57 @@ namespace gfx
         }
         tex_.updateTexelData((void *)depthTexBuf_.data());
     }
+   
+    
+// RGBFeed
+//
+    void RGBFeed::update()
+    {
+        xn::ImageMetaData imd;
+        sensor::imageGenerator().GetMetaData(imd);
+        
+        if (!bInit)
+        {
+            bInit = true;
+            
+            texWidth = getClosestPowerOfTwo(imd.XRes());
+            texHeight = getClosestPowerOfTwo(imd.YRes());
+            imageTexBuf_.resize(texWidth * texHeight * 4);
+            
+            tex_ = gfx::Texture(texWidth, texHeight, Texture::Format::Rgb8);
+            
+            topLeftX = imd.XRes();
+            topLeftY = 0;
+            bottomRightY = imd.YRes();
+            bottomRightX = 0;
+            texXpos = (float)imd.XRes() / texWidth;
+            texYpos = (float)imd.YRes() / texHeight;
+            
+            //memset(texcoords, 0, 8*sizeof(float));
+            //texcoords[0] = texXpos, texcoords[1] = texYpos, texcoords[2] = texXpos, texcoords[7] = texYpos;
+        }
+        
+        // Update texture data
+        {
+            const XnRGB24Pixel* pImageRow = imd.RGB24Data();
+            XnRGB24Pixel* pTexRow = (XnRGB24Pixel*)(imageTexBuf_.data() + imd.YOffset() * texWidth);
+            
+            for (XnUInt y = 0; y < imd.YRes(); ++y)
+            {
+                const XnRGB24Pixel* pImage = pImageRow;
+                XnRGB24Pixel* pTex = pTexRow + imd.XOffset();
+                
+                for (XnUInt x = 0; x < imd.XRes(); ++x, ++pImage, ++pTex)
+                {
+                    *pTex = *pImage;
+                }
+                
+                pImageRow += imd.XRes();
+                pTexRow += texWidth;
+            }
+        }
+        tex_.updateTexelData((void *)imageTexBuf_.data());
+    }
     
 } // namespace gfx
 

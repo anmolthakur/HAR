@@ -66,6 +66,7 @@ namespace sensor
     
     xn::DepthGenerator &depthGenerator();
     xn::UserGenerator &userGenerator();
+    xn::ImageGenerator &imageGenerator();
 }
 
 
@@ -124,6 +125,24 @@ namespace gfx
     private:
         float topLeftX, topLeftY, bottomRightY, bottomRightX, texXpos, texYpos;
         std::vector<unsigned char> depthTexBuf_;
+        Texture tex_;
+        bool bInit = false;
+        unsigned int texWidth, texHeight;
+    };
+    
+
+// RGBFeed
+//
+    class RGBFeed
+    {
+    public:
+        Texture *getTexture() { return &tex_; }
+        
+        void update();
+        
+    private:
+        float topLeftX, topLeftY, bottomRightY, bottomRightX, texXpos, texYpos;
+        std::vector<unsigned char> imageTexBuf_;
         Texture tex_;
         bool bInit = false;
         unsigned int texWidth, texHeight;
