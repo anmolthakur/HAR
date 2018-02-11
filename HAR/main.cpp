@@ -49,6 +49,7 @@ int Application::run()
 {
     do
     {
+        ::sleep(30);
         sensor::updateAll();
     }
     while(window::updateAll());
