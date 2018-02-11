@@ -33,7 +33,7 @@ int main(int argc, char *argv[])
 //
 Application::Application()
 {
-    window::create("har", [this](window::Layer layer) {
+    window::create("Human Activity Prediction", [this](window::Layer layer) {
         drawFunction(layer);
     });
     
