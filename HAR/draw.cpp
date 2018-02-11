@@ -1,0 +1,434 @@
+#include "subsys.hpp"
+#include "har.hpp"
+
+
+// OpenGLHelper Implementation
+//
+void OpenGLHelper::init()
+{
+    glClearColor(0.5, 0.5, 0.5, 0.0);
+}
+
+void OpenGLHelper::beginFrame()
+{
+    glClear(GL_COLOR_BUFFER_BIT);
+}
+
+void OpenGLHelper::endFrame()
+{
+}
+
+
+
+// GUIHelper Implementation
+//
+namespace
+{
+    gfx::Texture rgbTex, depthTex;
+
+    template <typename EnumType>
+    void doTabButton(const char *name, EnumType &variable, const EnumType value)
+    {
+        bool bPushed = false;
+        if (variable == value)
+        {
+            bPushed = true;
+            ImGui::PushStyleColor(ImGuiCol_Button, ImGui::GetStyle().Colors[ImGuiCol_ButtonHovered]);
+        }
+        if (ImGui::Button(name, ImVec2(90, 20)))
+        {
+            variable = value;
+        }
+        if (bPushed)
+        {
+            ImGui::PopStyleColor();
+        }
+    }
+}
+
+void GUIHelper::init()
+{
+    cv::Mat rgb = cv::imread("data/checker-rgb.jpg");
+    cv::Mat depth = cv::imread("data/checker.png");
+    
+    rgbTex = gfx::Texture(rgb);
+    depthTex = gfx::Texture(depth);
+}
+
+void GUIHelper::beginFrame(const ImVec2 &windowSize)
+{
+    this->windowSize = windowSize;
+}
+
+void GUIHelper::endFrame()
+{
+}
+
+
+void GUIHelper::doMainContent(gfx::Texture *depthTexture)
+{
+// Top BAR
+    {
+        ImGui::SetNextWindowPos(ImVec2(0, 0));
+        ImGui::SetNextWindowSize(ImVec2(windowSize.x, 30));
+        ImGui::Begin("top-bar", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+        {
+            ImGui::Dummy(ImVec2((windowSize.x - 200)/2, 20));
+            ImGui::SameLine();
+            doTabButton("RGB", currentMainPanelTab, MainPanelTab::RGB);
+            ImGui::SameLine();
+            doTabButton("Depth", currentMainPanelTab, MainPanelTab::DEPTH);
+        }
+        ImGui::End();
+    }
+    
+// Content (RGB/Depth)
+    {
+        ImGui::SetNextWindowPos(ImVec2(0, 30));
+        ImGui::SetNextWindowSize(ImVec2(windowSize.x, windowSize.y - 30));
+        ImGui::Begin("main-content", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoInputs);
+        {
+            ImTextureID tex = 0;
+            switch(currentMainPanelTab)
+            {
+            case MainPanelTab::RGB:
+                tex = reinterpret_cast<void *>(rgbTex.platformHandle());
+                break;
+
+            case MainPanelTab::DEPTH:
+                    tex = reinterpret_cast<void *>(depthTexture->platformHandle()); //reinterpret_cast<void *>(depthTex.platformHandle());
+                break;
+            };
+            
+            auto maxSize = ImGui::GetWindowContentRegionMax();
+            auto minSize = ImGui::GetWindowContentRegionMin();
+            ImGui::Image(tex, ImVec2(maxSize.x - minSize.x, maxSize.y - minSize.y));
+        }
+        ImGui::End();
+    }
+}
+
+void GUIHelper::doLeftPanel()
+{
+    ImGui::SetNextWindowPos(ImVec2(0, 30));
+    ImGui::SetNextWindowSize(ImVec2(200, windowSize.y - 230));
+    ImGui::Begin("Properties", &bLeftPanelOpen, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
+    {
+        ImGui::LabelText("prop1", "%0.3f", someproperty0);
+        ImGui::LabelText("prop2", "%0.3f", someproperty1);
+        ImGui::LabelText("prop3", "%0.3f", someproperty2);
+    }
+    ImGui::End();
+}
+
+void GUIHelper::doRightPanel()
+{
+    ImGui::SetNextWindowPos(ImVec2(windowSize.x - 400, 30));
+    ImGui::SetNextWindowSize(ImVec2(400, windowSize.y - 230));
+    ImGui::Begin("Graphs", &bRightPanelOpen, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
+    {
+        doTabButton("Hands", currentRightPanelTab, RightPanelTab::HAND_TRAJECTORIES); ImGui::SameLine();
+        doTabButton("Predicted", currentRightPanelTab, RightPanelTab::PREDICTED_TRAJECTORIES); ImGui::SameLine();
+        doTabButton("Distance", currentRightPanelTab, RightPanelTab::DISTANCE_GRAPH); ImGui::SameLine();
+        doTabButton("Angle", currentRightPanelTab, RightPanelTab::ANGULAR_GRAPH);
+        ImGui::Separator();
+        
+        switch(currentRightPanelTab)
+        {
+        case RightPanelTab::HAND_TRAJECTORIES:
+                drawHandTrajectories();
+            break;
+
+        case RightPanelTab::PREDICTED_TRAJECTORIES:
+                drawPredictedTrajectories();
+            break;
+
+        case RightPanelTab::DISTANCE_GRAPH:
+                drawDistanceGraph();
+            break;
+
+        case RightPanelTab::ANGULAR_GRAPH:
+                drawAngleGraph();
+            break;
+        };
+    }
+    ImGui::End();
+}
+
+void GUIHelper::doBottomPanel()
+{
+    static TestBarGraphGenerator graph;
+    graph.update();
+    
+    static TestStatesInfo states;
+    states.update();
+    
+    ImGui::SetNextWindowPos(ImVec2(0, windowSize.y - 200));
+    ImGui::SetNextWindowSize(ImVec2(windowSize.x, 200));
+    ImGui::Begin("Plots", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
+    {
+        using namespace ImGui;
+        ImGuiWindow* wind = GetCurrentWindow();
+        ImDrawList* dl = wind->DrawList;
+        ImGuiDrawContext& dc = wind->DC;
+
+        auto winMaxPt = GetWindowContentRegionMax();
+        auto winMinPt = GetWindowContentRegionMin();
+        
+        ImVec2 pos = dc.CursorPos;
+        auto w = winMaxPt.x - winMinPt.x;
+        auto h = winMaxPt.y - winMinPt.y;
+        
+        auto wby2 = w / 2;
+        auto plotWidth = wby2 - 10;
+        
+        auto bargraphMinPt = pos;
+        auto bargraphMaxPt = ImVec2(pos.x + plotWidth, pos.y + h);
+        dl->AddRectFilled(bargraphMinPt, bargraphMaxPt, 0x66000000, 10.0f);
+        drawBarGraph(dl, bargraphMinPt, bargraphMaxPt, graph);
+        
+        auto statesMinPt = ImVec2(pos.x + wby2, pos.y);
+        auto statesMaxPt = ImVec2(pos.x + wby2 + plotWidth, pos.y + h);
+        dl->AddRectFilled(statesMinPt, statesMaxPt, 0x66000000, 10.0f);
+        drawStates(dl, dc, statesMinPt, statesMaxPt, states);
+    }
+    ImGui::End();
+}
+
+void GUIHelper::drawHandTrajectories()
+{
+    static SinWaveGenerator sinWave(3, 20, -1.0f, 1.0f);
+    static TriangleWaveGenerator triangleWave(3);
+    static RandomWaveGenerator randomWave(3);
+    
+    using namespace ImGui;
+    ImGuiWindow* wind = GetCurrentWindow();
+    ImDrawList* dl = wind->DrawList;
+    ImGuiDrawContext& dc = wind->DC;
+    
+    auto winMaxPt = GetWindowContentRegionMax();
+    auto winMinPt = GetWindowContentRegionMin();
+    
+    ImVec2 pos = dc.CursorPos;
+    auto w = winMaxPt.x - winMinPt.x;
+    auto h = winMaxPt.y - winMinPt.y - 22;
+    auto hby2 = h / 2;
+    auto graphHeight = hby2 - 2;
+    
+    auto graphMinPt = pos;
+    auto graphMaxPt = ImVec2(pos.x + w, pos.y + graphHeight);
+    dl->AddRectFilled(graphMinPt, graphMaxPt, 0x66000000, 10.0f);
+    {
+        drawGraph(dl, graphMinPt, graphMaxPt, triangleWave, 0xffffffff);
+    }
+    
+    graphMinPt = ImVec2(pos.x, pos.y + hby2);
+    graphMaxPt = ImVec2(pos.x + w, pos.y + hby2 + graphHeight);
+    dl->AddRectFilled(graphMinPt, graphMaxPt, 0x66000000, 10.0f);
+    {
+        drawGraph(dl, graphMinPt, graphMaxPt, sinWave, 0xffffffff);
+    }
+}
+
+void GUIHelper::drawPredictedTrajectories()
+{
+    static SinWaveGenerator sinWave(3, 20, -1.0f, 1.0f);
+    static TriangleWaveGenerator triangleWave(15);
+    static SinWaveGenerator sinWave2(4, 25, -1.0f, 1.0f);
+    static TriangleWaveGenerator triangleWave2(22);
+
+    using namespace ImGui;
+    ImGuiWindow* wind = GetCurrentWindow();
+    ImDrawList* dl = wind->DrawList;
+    ImGuiDrawContext& dc = wind->DC;
+    
+    auto winMaxPt = GetWindowContentRegionMax();
+    auto winMinPt = GetWindowContentRegionMin();
+    
+    ImVec2 pos = dc.CursorPos;
+    auto w = winMaxPt.x - winMinPt.x;
+    auto h = winMaxPt.y - winMinPt.y - 22;
+    auto hby2 = h / 2;
+    auto graphHeight = hby2 - 2;
+    
+    auto graphMinPt = pos;
+    auto graphMaxPt = ImVec2(pos.x + w, pos.y + graphHeight);
+    dl->AddRectFilled(graphMinPt, graphMaxPt, 0x66000000, 10.0f);
+    {
+        drawGraph(dl, graphMinPt, graphMaxPt, sinWave, 0xff0000ff);
+        drawGraph(dl, graphMinPt, graphMaxPt, triangleWave, 0xff00ff00);
+    }
+    
+    graphMinPt = ImVec2(pos.x, pos.y + hby2);
+    graphMaxPt = ImVec2(pos.x + w, pos.y + hby2 + graphHeight);
+    dl->AddRectFilled(graphMinPt, graphMaxPt, 0x66000000, 10.0f);
+    {
+        drawGraph(dl, graphMinPt, graphMaxPt, triangleWave2, 0xff0000ff);
+        drawGraph(dl, graphMinPt, graphMaxPt, sinWave2, 0xff00ff00);
+    }
+}
+
+void GUIHelper::drawDistanceGraph()
+{
+    static RandomWaveGenerator randomWave(30);
+    
+    using namespace ImGui;
+    ImGuiWindow* wind = GetCurrentWindow();
+    ImDrawList* dl = wind->DrawList;
+    ImGuiDrawContext& dc = wind->DC;
+    
+    auto winMaxPt = GetWindowContentRegionMax();
+    auto winMinPt = GetWindowContentRegionMin();
+    
+    ImVec2 pos = dc.CursorPos;
+    auto w = winMaxPt.x - winMinPt.x;
+    auto h = winMaxPt.y - winMinPt.y - 22;
+    
+    auto graphMinPt = pos;
+    auto graphMaxPt = ImVec2(pos.x + w, pos.y + h);
+    dl->AddRectFilled(graphMinPt, graphMaxPt, 0x66000000, 10.0f);
+    {
+        drawGraph(dl, graphMinPt, graphMaxPt, randomWave, 0xffffffff);
+    }
+}
+
+void GUIHelper::drawAngleGraph()
+{
+    static SinWaveGenerator sinWave(3, 20, 0.0f, 1.0f);
+    
+    using namespace ImGui;
+    ImGuiWindow* wind = GetCurrentWindow();
+    ImDrawList* dl = wind->DrawList;
+    ImGuiDrawContext& dc = wind->DC;
+    
+    auto winMaxPt = GetWindowContentRegionMax();
+    auto winMinPt = GetWindowContentRegionMin();
+    
+    ImVec2 pos = dc.CursorPos;
+    auto w = winMaxPt.x - winMinPt.x;
+    auto h = winMaxPt.y - winMinPt.y - 22;
+    
+    auto graphMinPt = pos;
+    auto graphMaxPt = ImVec2(pos.x + w, pos.y + h);
+    dl->AddRectFilled(graphMinPt, graphMaxPt, 0x66000000, 10.0f);
+    {
+        drawGraph(dl, graphMinPt, graphMaxPt, sinWave, 0xffffffff, -1.0f, 1.0f);
+    }
+}
+
+void GUIHelper::drawBarGraph(ImDrawList* dl, ImVec2 minPt, ImVec2 maxPt, BarGraphGenerator &graph)
+{
+    float width = maxPt.x - minPt.x;
+    int N = graph.numBars();
+    auto barWidth = width / N;
+
+    float maxBarHeight = maxPt.y - minPt.y;
+    
+    ImGui::BeginColumns("col", 6);
+    for (int k = 0; k < N; ++k)
+    {
+        float value = graph.valueAtBar(k) * 0.01f;
+        
+        ImVec2 bl(minPt.x + k * barWidth, maxPt.y); // bottom-left
+        ImVec2 tr(minPt.x + k * barWidth + barWidth, maxPt.y - maxBarHeight * value); // top-right
+        
+        dl->AddRectFilled(bl, tr, 0xff0000ff);
+        
+        ImGui::SetColumnWidth(k, barWidth); ImGui::Text("abcdefgh"); ImGui::NextColumn();
+    }
+    ImGui::EndColumns();
+}
+
+void GUIHelper::drawStates(ImDrawList* dl, ImGuiDrawContext& dc, ImVec2 minPt, ImVec2 maxPt, StatesInfo &states)
+{
+    const int numStates = states.numStates();
+    const int statesPerRow = 5;
+    {
+        const int numCols = statesPerRow;
+        const int numRows = numStates / numCols + (numStates % numCols? 1 : 0);
+        
+        const float margin = 2;
+        const float margin2 = margin * 2;
+        
+        const float width = maxPt.x - minPt.x;
+        const float height = maxPt.y - minPt.y;
+        const float rowHeight = height / numRows;
+        const float colWidth = width / numCols;
+        
+        int currentState = 0;
+        
+        for (int r = 0; r < numRows; ++r)
+        {
+            ImVec2 rowStart(minPt.x, minPt.y + r * rowHeight);
+            
+            for (int c = 0; c < numCols; ++c)
+            {
+                ImVec2 colStart(rowStart.x + c * colWidth + margin, rowStart.y + margin);
+                ImVec2 colEnd(rowStart.x + c * colWidth + colWidth - margin2, rowStart.y + rowHeight - margin2);
+                
+                if (states.isStateActive(currentState))
+                {
+                    dl->AddRectFilled(colStart, colEnd, 0xff666666);
+                    dl->AddRect(colStart, colEnd, 0xffffffff);
+                }
+                else
+                {
+                    dl->AddRect(colStart, colEnd, 0xff666666);
+                }
+                
+                ImGui::SetCursorScreenPos(colStart);
+                ImGui::Text("sudiwc");
+                
+                ++currentState;
+                if (currentState == numStates) break;
+            }
+            
+            if (currentState == numStates) break;
+        }
+    }
+}
+
+void GUIHelper::drawGraph(ImDrawList* dl, ImVec2 minPt, ImVec2 maxPt, GraphGenerator &graph, ImU32 col)
+{
+    drawGraph(dl, minPt, maxPt, graph, col, graph.minValue(), graph.maxValue());
+}
+
+void GUIHelper::drawGraph(ImDrawList* dl, ImVec2 minPt, ImVec2 maxPt, GraphGenerator &graph, ImU32 col, float minValue, float maxValue)
+{
+    ImVec2 startPt(minPt.x, 0.5f * (minPt.y + maxPt.y));
+    ImVec2 endPt(maxPt.x, 0.5f * (minPt.y + maxPt.y));
+    
+    dl->AddLine(startPt, endPt, 0x66ffffff, 1.0f);
+    
+    auto steps = graph.numSamples();
+    assert(steps > 1 && "steps shoud be greater than 1!");
+    float deltaX = (maxPt.x - minPt.x) / (steps - 1);
+    
+    auto evaluatePt = [&](int sample)
+    {
+        float minY = maxPt.y;
+        float maxY = minPt.y;
+        
+        float x = startPt.x + sample * deltaX;
+        float y = (graph.valueAt(sample) - minValue) / (maxValue - minValue);
+        y = y * maxY + (1.0f - y) * minY;
+        
+        return ImVec2(x, y);
+    };
+    
+    ImVec2 prevPt = evaluatePt(0);
+    
+    for (auto i = 1; i < steps; ++i)
+    {
+        ImVec2 currPt = evaluatePt(i);
+        
+        dl->AddLine(prevPt, currPt, col, 1.0f);
+        
+        prevPt = currPt;
+    }
+}
+
+
+
+
+
