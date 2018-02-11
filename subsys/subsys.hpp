@@ -155,7 +155,6 @@ namespace gfx
     private:
         float topLeftX, topLeftY, bottomRightY, bottomRightX, texXpos, texYpos;
         std::vector<unsigned char> imageTexBuf_;
-        Texture tex_;
         bool bInit = false;
         unsigned int texWidth, texHeight;
     };
