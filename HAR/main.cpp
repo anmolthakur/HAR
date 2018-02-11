@@ -1,6 +1,13 @@
 #include "subsys.hpp"
 #include "har.hpp"
 
+
+namespace
+{
+    const char *gWindowName = "Human Activity Prediction";
+}
+
+
 // Application logic class
 //
 class Application
@@ -33,7 +40,7 @@ int main(int argc, char *argv[])
 //
 Application::Application()
 {
-    window::create("Human Activity Prediction", [this](window::Layer layer) {
+    window::create(gWindowName, [this](window::Layer layer) {
         drawFunction(layer);
     });
     
@@ -69,7 +76,7 @@ void Application::drawFunction(window::Layer layer)
         break;
         
     case window::Layer::GUI:
-        gui.beginFrame(window::windowSize("har"));
+        gui.beginFrame(window::windowSize(gWindowName));
         {
             gui.doMainContent(depthViz.getTexture());
             gui.doLeftPanel();
