@@ -188,8 +188,10 @@ namespace gfx
             texXpos = (float)dmd.XRes() / texWidth;
             texYpos = (float)dmd.YRes() / texHeight;
         
-            //memset(texcoords, 0, 8*sizeof(float));
-            //texcoords[0] = texXpos, texcoords[1] = texYpos, texcoords[2] = texXpos, texcoords[7] = texYpos;
+            uv1 = ImVec2(0.0f, 0.0f);
+            uv2 = ImVec2(texXpos, texYpos);
+            //memset(texcoords, 0, 8 * sizeof(float));
+            //texcoords[0] = texXpos; texcoords[1] = texYpos; texcoords[2] = texXpos; texcoords[7] = texYpos;
         }
         
         // Update texture data
@@ -319,8 +321,10 @@ namespace gfx
             texXpos = (float)imd.XRes() / texWidth;
             texYpos = (float)imd.YRes() / texHeight;
             
-            //memset(texcoords, 0, 8*sizeof(float));
-            //texcoords[0] = texXpos, texcoords[1] = texYpos, texcoords[2] = texXpos, texcoords[7] = texYpos;
+            uv1 = ImVec2(0.0f, 0.0f);
+            uv2 = ImVec2(texXpos, texYpos);
+            //memset(texcoords, 0, 8 * sizeof(float));
+            //texcoords[0] = texXpos; texcoords[1] = texYpos; texcoords[2] = texXpos; texcoords[7] = texYpos;
         }
         
         // Update texture data

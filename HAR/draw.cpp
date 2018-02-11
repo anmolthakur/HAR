@@ -58,7 +58,7 @@ void GUIHelper::endFrame()
 }
 
 
-void GUIHelper::doMainContent(gfx::Texture *depthTexture, gfx::Texture *rgbTexture)
+void GUIHelper::doMainContent(gfx::DynamicTextureGenerator &depthTexgen, gfx::DynamicTextureGenerator &rgbTexgen)
 {
 // Top BAR
     {
@@ -82,20 +82,30 @@ void GUIHelper::doMainContent(gfx::Texture *depthTexture, gfx::Texture *rgbTextu
         ImGui::Begin("main-content", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoInputs);
         {
             ImTextureID tex = 0;
+            ImVec2 uv1, uv2;
+            
             switch(currentMainPanelTab)
             {
             case MainPanelTab::RGB:
-                tex = reinterpret_cast<void *>(rgbTexture->platformHandle());
+                {
+                    tex = reinterpret_cast<void *>(rgbTexgen.getTexture()->platformHandle());
+                    uv1 = rgbTexgen.getUV1();
+                    uv2 = rgbTexgen.getUV2();
+                }
                 break;
 
             case MainPanelTab::DEPTH:
-                tex = reinterpret_cast<void *>(depthTexture->platformHandle());
+                {
+                    tex = reinterpret_cast<void *>(depthTexgen.getTexture()->platformHandle());
+                    uv1 = depthTexgen.getUV1();
+                    uv2 = depthTexgen.getUV2();
+                }
                 break;
             };
             
             auto maxSize = ImGui::GetWindowContentRegionMax();
             auto minSize = ImGui::GetWindowContentRegionMin();
-            ImGui::Image(tex, ImVec2(maxSize.x - minSize.x, maxSize.y - minSize.y));
+            ImGui::Image(tex, ImVec2(maxSize.x - minSize.x, maxSize.y - minSize.y), uv1, uv2);
         }
         ImGui::End();
     }

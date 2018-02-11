@@ -113,19 +113,33 @@ namespace gfx
     };
     
     
-// DepthVisualization
+// Dynamic Texture generator
 //
-    class DepthVisualization
+    class DynamicTextureGenerator
     {
     public:
-        Texture *getTexture() { return &tex_; }
+        virtual void update() = 0;
         
-        void update();
+        Texture *getTexture() { return &tex_; }
+        ImVec2 getUV1() { return uv1; }
+        ImVec2 getUV2() { return uv2; }
+
+    protected:
+        Texture tex_;
+        ImVec2 uv1, uv2;
+    };
+    
+    
+// DepthVisualization
+//
+    class DepthVisualization : public DynamicTextureGenerator
+    {
+    public:
+        void update() override;
         
     private:
         float topLeftX, topLeftY, bottomRightY, bottomRightX, texXpos, texYpos;
         std::vector<unsigned char> depthTexBuf_;
-        Texture tex_;
         bool bInit = false;
         unsigned int texWidth, texHeight;
     };
@@ -133,12 +147,10 @@ namespace gfx
 
 // RGBFeed
 //
-    class RGBFeed
+    class RGBFeed : public DynamicTextureGenerator
     {
     public:
-        Texture *getTexture() { return &tex_; }
-        
-        void update();
+        void update() override;
         
     private:
         float topLeftX, topLeftY, bottomRightY, bottomRightX, texXpos, texYpos;

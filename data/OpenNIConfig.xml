@@ -34,24 +34,22 @@
 				-->
 			</Query>
 			<Configuration>
-				<MapOutputMode xRes="640" yRes="480" FPS="30"/>
-				<Mirror on="false" />
+				<!-- Uncomment to set requested mode
+				<MapOutputMode xRes="640" yRes="480" FPS="30"/> 
+				-->
+
+				<!-- Uncomment to override global mirror
+				<Mirror on="false" /> 
+				-->
 			</Configuration>
 		</Node>
 		
 		<!-- Create an image node. If it fails, continue anyway. -->
-		<Node type="Image" name="MyImage" stopOnError="false" />
-            <Configuration>
-                <MapOutputMode xRes="640" yRes="480" FPS="30"/>
-                <PixelFormat>RGB24</PixelFormat>
-                <Mirror on="false" />
-            </Configuration>
-        </Node>
-    
-        <Node type="User" />
+		<Node type="Image" stopOnError="false" />
 
-        <!-- Uncomment nodes from here if you need them.
+		<!-- Uncomment nodes from here if you need them.
 		<Node type="Audio" />
+		<Node type="User" />
 		<Node type="Hands" />
 		<Node type="Gesture" />
 		<Node type="Scene" />

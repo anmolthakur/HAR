@@ -80,7 +80,7 @@ void Application::drawFunction(window::Layer layer)
     case window::Layer::GUI:
         gui.beginFrame(window::windowSize(gWindowName));
         {
-            gui.doMainContent(depthViz.getTexture(), rgbFeed.getTexture());
+            gui.doMainContent(depthViz, rgbFeed);
             gui.doLeftPanel();
             gui.doRightPanel();
             gui.doBottomPanel();

@@ -43,7 +43,7 @@ public:
     void beginFrame(const ImVec2 &windowSize);
     void endFrame();
     
-    void doMainContent(gfx::Texture *depthTexture, gfx::Texture *rgbTexture);
+    void doMainContent(gfx::DynamicTextureGenerator &depthTexgen, gfx::DynamicTextureGenerator &rgbTexgen);
     void doLeftPanel();
     void doRightPanel();
     void doBottomPanel();
