@@ -337,7 +337,7 @@ void GUIHelper::drawBarGraph(ImDrawList* dl, ImVec2 minPt, ImVec2 maxPt, BarGrap
         
         dl->AddRectFilled(bl, tr, 0xff0000ff);
         
-        ImGui::SetColumnWidth(k, barWidth); ImGui::Text("abcdefgh"); ImGui::NextColumn();
+        ImGui::SetColumnWidth(k, barWidth); ImGui::Text("Action"); ImGui::NextColumn(); //text need to change
     }
     ImGui::EndColumns();
 }
@@ -380,7 +380,7 @@ void GUIHelper::drawStates(ImDrawList* dl, ImGuiDrawContext& dc, ImVec2 minPt, I
                 }
                 
                 ImGui::SetCursorScreenPos(colStart);
-                ImGui::Text("sudiwc");
+                ImGui::Text("State"); // text need to change
                 
                 ++currentState;
                 if (currentState == numStates) break;
