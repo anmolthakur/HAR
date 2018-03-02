@@ -117,9 +117,9 @@ void GUIHelper::doLeftPanel()
     ImGui::SetNextWindowSize(ImVec2(200, windowSize.y - 230));
     ImGui::Begin("Properties", &bLeftPanelOpen, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
     {
-        ImGui::LabelText("prop1", "%0.3f", someproperty0);
-        ImGui::LabelText("prop2", "%0.3f", someproperty1);
-        ImGui::LabelText("prop3", "%0.3f", someproperty2);
+        ImGui::LabelText("Prop1", "%0.3f", someproperty0);
+        ImGui::LabelText("Prop2", "%0.3f", someproperty1);
+        ImGui::LabelText("Prop3", "%0.3f", someproperty2);
     }
     ImGui::End();
 }
@@ -404,7 +404,7 @@ void GUIHelper::drawGraph(ImDrawList* dl, ImVec2 minPt, ImVec2 maxPt, GraphGener
     dl->AddLine(startPt, endPt, 0x66ffffff, 1.0f);
     
     auto steps = graph.numSamples();
-    assert(steps > 1 && "steps shoud be greater than 1!");
+    assert(steps > 1 && "Steps shoud be greater than 1!");
     float deltaX = (maxPt.x - minPt.x) / (steps - 1);
     
     auto evaluatePt = [&](int sample)
