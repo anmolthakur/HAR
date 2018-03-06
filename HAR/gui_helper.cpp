@@ -1,25 +1,6 @@
 #include "subsys.hpp"
 #include "har.hpp"
 
-
-// OpenGLHelper Implementation
-//
-void OpenGLHelper::init()
-{
-    glClearColor(0.5, 0.5, 0.5, 0.0);
-}
-
-void OpenGLHelper::beginFrame()
-{
-    glClear(GL_COLOR_BUFFER_BIT);
-}
-
-void OpenGLHelper::endFrame()
-{
-}
-
-
-
 // GUIHelper Implementation
 //
 namespace
@@ -44,6 +25,28 @@ namespace
     }
 }
 
+void GUIHelper::drawCurrentScreen(gfx::DynamicTextureGenerator &depthViz, gfx::DynamicTextureGenerator &rgbFeed)
+{
+    switch (currentScreen)
+    {
+    case Screen::Startup:
+        {
+            doStartupScreen();
+        }
+        break;
+            
+    case Screen::SingleTarget:
+    case Screen::MultiTarget:
+        {
+            doMainContent(depthViz, rgbFeed);
+            doLeftPanel();
+            doRightPanel();
+            doBottomPanel();
+        }
+        break;
+    };
+}
+
 void GUIHelper::init()
 {
 }
@@ -57,6 +60,38 @@ void GUIHelper::endFrame()
 {
 }
 
+void GUIHelper::doStartupScreen()
+{
+    const int windowWidth = 300;
+    const int windowHeight = 60;
+
+    auto screenWidth = this->windowSize.x;
+    auto screenHeight = this->windowSize.y;
+
+    ImGui::SetNextWindowPos(ImVec2((screenWidth - windowWidth) / 2, (screenHeight - windowHeight) / 2));
+    ImGui::SetNextWindowSize(ImVec2(windowWidth, windowHeight));
+    ImGui::Begin("Human Activity Prediction", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
+    {
+        ImGui::BeginColumns("button-cols", 2);
+        {
+            ImGui::SetColumnWidth(0, windowWidth / 2);
+            if (ImGui::Button("Single Target"))
+            {
+                currentScreen = Screen::SingleTarget;
+            }
+            ImGui::NextColumn();
+            
+            ImGui::SetColumnWidth(1, windowWidth / 2);
+            if (ImGui::Button("Multiple Target"))
+            {
+                currentScreen = Screen::MultiTarget;
+            }
+            ImGui::NextColumn();
+        }
+        ImGui::EndColumns();
+    }
+    ImGui::End();
+}
 
 void GUIHelper::doMainContent(gfx::DynamicTextureGenerator &depthTexgen, gfx::DynamicTextureGenerator &rgbTexgen)
 {
@@ -66,7 +101,12 @@ void GUIHelper::doMainContent(gfx::DynamicTextureGenerator &depthTexgen, gfx::Dy
         ImGui::SetNextWindowSize(ImVec2(windowSize.x, 30));
         ImGui::Begin("top-bar", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
         {
-            ImGui::Dummy(ImVec2((windowSize.x - 200)/2, 20));
+            if (ImGui::Button("<< Back", ImVec2(60, 20)))
+            {
+                currentScreen = Screen::Startup;
+            }
+            ImGui::SameLine();
+            ImGui::Dummy(ImVec2((windowSize.x - 280)/2, 20));
             ImGui::SameLine();
             doTabButton("RGB", currentMainPanelTab, MainPanelTab::RGB);
             ImGui::SameLine();
@@ -262,12 +302,35 @@ void GUIHelper::drawPredictedTrajectories()
         drawGraph(dl, graphMinPt, graphMaxPt, triangleWave, 0xff00ff00);
     }
     
-    graphMinPt = ImVec2(pos.x, pos.y + hby2);
-    graphMaxPt = ImVec2(pos.x + w, pos.y + hby2 + graphHeight);
-    dl->AddRectFilled(graphMinPt, graphMaxPt, 0x66000000, 10.0f);
+    if (currentScreen == Screen::SingleTarget)
     {
-        drawGraph(dl, graphMinPt, graphMaxPt, triangleWave2, 0xff0000ff);
-        drawGraph(dl, graphMinPt, graphMaxPt, sinWave2, 0xff00ff00);
+        graphMinPt = ImVec2(pos.x, pos.y + hby2);
+        graphMaxPt = ImVec2(pos.x + w, pos.y + hby2 + graphHeight);
+        dl->AddRectFilled(graphMinPt, graphMaxPt, 0x66000000, 10.0f);
+        {
+            drawGraph(dl, graphMinPt, graphMaxPt, triangleWave2, 0xff0000ff);
+            drawGraph(dl, graphMinPt, graphMaxPt, sinWave2, 0xff00ff00);
+        }
+    }
+    else if (currentScreen == Screen::MultiTarget)
+    {
+        graphMinPt = ImVec2(pos.x, pos.y + hby2);
+        graphMaxPt = ImVec2(pos.x + w / 2, pos.y + hby2 + graphHeight);
+        dl->AddRectFilled(graphMinPt, graphMaxPt, 0x440000ff, 10.0f);
+        {
+            drawGraph(dl, graphMinPt, graphMaxPt, triangleWave2, 0xff00ffff);
+            drawGraph(dl, graphMinPt, graphMaxPt, sinWave2, 0xffff0000);
+        }
+        dl->AddText(graphMinPt, 0xffffffff, "X");
+
+        graphMinPt = ImVec2(pos.x + w / 2, pos.y + hby2);
+        graphMaxPt = ImVec2(pos.x + w, pos.y + hby2 + graphHeight);
+        dl->AddRectFilled(graphMinPt, graphMaxPt, 0x4400ff00, 10.0f);
+        {
+            drawGraph(dl, graphMinPt, graphMaxPt, triangleWave2, 0xff00ffff);
+            drawGraph(dl, graphMinPt, graphMaxPt, sinWave2, 0xffff0000);
+        }
+        dl->AddText(graphMinPt, 0xffffffff, "Y");
     }
 }
 

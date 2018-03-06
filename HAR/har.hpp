@@ -12,6 +12,32 @@ class OpenGLHelper
 public:
     void init();
     void beginFrame();
+    
+#ifdef notused
+    void drawRectangle(float topLeftX, float topLeftY, float bottomRightX, float bottomRightY);
+    void drawTexture(float topLeftX, float topLeftY, float bottomRightX, float bottomRightY);
+    void glPrintString(void *font, char *str);
+    
+    void drawSkeleton(const xn::DepthMetaData& dmd, const xn::SceneMetaData& smd, XnUserID player);
+    void showVelocity(xn::UserGenerator& userGenerator,
+                                     xn::DepthGenerator& depthGenerator,
+                                     XnUserID player, XnSkeletonJoint eJoint);
+    void distance3D(xn::UserGenerator& userGenerator,
+                                   xn::DepthGenerator& depthGenerator,
+                    XnUserID player, XnSkeletonJoint eJoint1, XnSkeletonJoint eJoint2);
+    void drawPoint(xn::UserGenerator& userGenerator,
+                    xn::DepthGenerator& depthGenerator,
+                    XnUserID player, XnSkeletonJoint eJoint,
+                    ofstream &x_file, bool addComma=true);
+    void drawLimb(xn::UserGenerator& userGenerator,
+                    xn::DepthGenerator& depthGenerator,
+                    XnUserID player, XnSkeletonJoint eJoint1, XnSkeletonJoint eJoint2);
+    const char *getJointName (XnSkeletonJoint eJoint);
+    void drawJoint(xn::UserGenerator& userGenerator,
+                   xn::DepthGenerator& depthGenerator,
+                   XnUserID player, XnSkeletonJoint eJoint);
+#endif
+
     void endFrame();
 };
 
@@ -37,11 +63,18 @@ class GUIHelper
     enum RightPanelTab { HAND_TRAJECTORIES, PREDICTED_TRAJECTORIES, DISTANCE_GRAPH, ANGULAR_GRAPH };
     RightPanelTab currentRightPanelTab = HAND_TRAJECTORIES;
     
-    
 public:
+// Screens
+    enum Screen { Startup, SingleTarget, MultiTarget };
+    Screen currentScreen = Screen::Startup;
+    
     void init();
     void beginFrame(const ImVec2 &windowSize);
+    void drawCurrentScreen(gfx::DynamicTextureGenerator &depthTexgen, gfx::DynamicTextureGenerator &rgbTexgen);
     void endFrame();
+
+private:
+    void doStartupScreen();
     
     void doMainContent(gfx::DynamicTextureGenerator &depthTexgen, gfx::DynamicTextureGenerator &rgbTexgen);
     void doLeftPanel();
@@ -51,6 +84,7 @@ public:
 private:
     void drawHandTrajectories();
     void drawPredictedTrajectories();
+    void drawMultiplePredictedTrajectories();
     void drawDistanceGraph();
     void drawAngleGraph();
     
