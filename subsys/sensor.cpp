@@ -2,6 +2,8 @@
 
 namespace
 {
+    bool g_Initialized = false;
+    
     xn::Context g_Context;
     xn::ScriptNode g_scriptNode;
     xn::DepthGenerator g_DepthGenerator;
@@ -259,14 +261,20 @@ namespace sensor
     {
         if (XN_STATUS_OK != initOpenNI())
         {
-            exit(-1);
+            //exit(-1);
+            return;
         }
         
+        g_Initialized = true;
         gCallbackFunc = func;
     }
     
+    bool initialized() { return g_Initialized; }
+    
     void updateAll()
     {
+        if (!g_Initialized) return;
+        
         g_Context.WaitAnyUpdateAll();
         //g_Context.WaitOneUpdateAll(g_UserGenerator);
     }

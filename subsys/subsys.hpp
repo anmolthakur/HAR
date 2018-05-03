@@ -39,6 +39,28 @@
 //#include "imgui_tabs.h"
 
 
+//namespace
+//{
+    const static XnFloat Colors[13][3] =
+    {
+        {0,1,1},
+        {0,0,1}, // blue
+        {0,1,0},
+        {1,1,0}, // yellow
+        {1,0,0}, // red
+        {1,.5,0},
+        {.5,1,0},
+        {0,.5,1},
+        {.5,0,1},
+        {1,1,.5},
+        {1,1,1},
+        {0.5,0.5,0.5},    // Grey
+        {1,0,1} // Purple
+    };
+    const static XnUInt32 nColors = 13;
+//}
+
+
 namespace window
 {
     void create(const char *name, DrawCallback drawFunc);
@@ -46,6 +68,8 @@ namespace window
     bool updateAll();
     
     ImVec2 windowSize(const char *name);
+    
+    double getTime();
 }
 
 
@@ -63,6 +87,8 @@ namespace sensor
     void start(Callback func);
     
     void updateAll();
+    
+    bool initialized();
     
     xn::DepthGenerator &depthGenerator();
     xn::UserGenerator &userGenerator();
@@ -157,6 +183,22 @@ namespace gfx
         std::vector<unsigned char> imageTexBuf_;
         bool bInit = false;
         unsigned int texWidth, texHeight;
+    };
+    
+    
+// RenderToTexture
+//
+    class RenderToTexture
+    {
+        GLuint frameBuffer = 0;
+        GLuint depthRenderBuffer = 0;
+        int width = 0, height = 0;
+        
+    public:
+        ~RenderToTexture();
+        
+        bool begin(Texture *target);
+        void end();
     };
     
     

@@ -146,26 +146,10 @@ namespace gfx
     
 // DepthVisualization
 //
-    namespace {
-        XnFloat Colors[][3] =
-        {
-            {0,1,1},
-            {0,0,1},
-            {0,1,0},
-            {1,1,0},
-            {1,0,0},
-            {1,.5,0},
-            {.5,1,0},
-            {0,.5,1},
-            {.5,0,1},
-            {1,1,.5},
-            {1,1,1}
-        };
-        XnUInt32 nColors = 10;
-    }
- 
     void DepthVisualization::update()
     {
+        if (!sensor::initialized()) return;
+        
         xn::SceneMetaData smd;
         xn::DepthMetaData dmd;
         sensor::depthGenerator().GetMetaData(dmd);
@@ -301,6 +285,8 @@ namespace gfx
 //
     void RGBFeed::update()
     {
+        if (!sensor::initialized()) return;
+        
         xn::ImageMetaData imd;
         sensor::imageGenerator().GetMetaData(imd);
         
@@ -347,6 +333,55 @@ namespace gfx
             }
         }
         tex_.updateTexelData((void *)imageTexBuf_.data());
+    }
+    
+    
+// RenderToTexture
+//
+    RenderToTexture::~RenderToTexture()
+    {
+        glDeleteRenderbuffers(1, &depthRenderBuffer);
+        glDeleteFramebuffers(1, &frameBuffer);
+    }
+    
+    bool RenderToTexture::begin(Texture *target)
+    {
+        if (frameBuffer == 0) // first run
+        {
+            glGenFramebuffers(1, &frameBuffer);
+            glGenRenderbuffers(1, &depthRenderBuffer);
+            
+            glBindRenderbuffer(GL_RENDERBUFFER, depthRenderBuffer);
+            glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer);
+            glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthRenderBuffer);
+            
+            GLenum DrawBuffers[1] = {GL_COLOR_ATTACHMENT0};
+            glDrawBuffers(1, DrawBuffers); // "1" is the size of DrawBuffers
+        }
+        
+        glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer);
+        
+        if (target->width() != width || target->height() != height)
+        {
+            width = target->width();
+            height = target->height();
+            glBindRenderbuffer(GL_RENDERBUFFER, depthRenderBuffer);
+            glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
+        }
+        glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, (GLuint)target->platformHandle(), 0);
+
+        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) return false;
+        
+        glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer);
+        glViewport(0, 0, width, height);
+        
+        return true;
+    }
+    
+    void RenderToTexture::end()
+    {
+        glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, 0, 0);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
     
 } // namespace gfx

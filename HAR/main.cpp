@@ -2,10 +2,20 @@
 #include "har.hpp"
 
 
-namespace
-{
+//namespace
+//{
     const char *gWindowName = "Human Activity Prediction";
-}
+    
+    void *GLUT_BITMAP_HELVETICA_18 = nullptr;
+    
+    XnBool g_bDrawSkeleton = TRUE;
+    XnBool g_bPrintID = TRUE;
+    XnBool g_bPrintState = TRUE;
+    XnBool g_bPrintFrameID = FALSE;
+    
+    History g_RightHandPositionHistory;
+    History g_LeftHandPositionHistory;
+//}
 
 
 // Application logic class
@@ -16,6 +26,7 @@ class Application
     GUIHelper gui;
     gfx::DepthVisualization depthViz;
     gfx::RGBFeed rgbFeed;
+    gfx::RenderToTexture rtt;
     
 private:
     void drawFunction(window::Layer layer);
@@ -71,8 +82,38 @@ void Application::drawFunction(window::Layer layer)
     case window::Layer::BG:
         ogl.beginFrame();
         {
-            depthViz.update();
-            rgbFeed.update();
+            glMatrixMode(GL_PROJECTION);
+            glPushMatrix();
+            glLoadIdentity();
+            
+            if (gui.getCurrentMainPanelTab() == GUIHelper::MainPanelTab::RGB)
+            {
+                rgbFeed.update();
+                
+                auto *tex = rgbFeed.getTexture();
+                glOrtho(0, tex->width(), tex->height(), 0, -1.0, 1.0);
+                
+                if (rtt.begin(tex))
+                {
+                    ogl.drawSkeleton(false);
+                }
+                rtt.end();
+            }
+            else if (gui.getCurrentMainPanelTab() == GUIHelper::MainPanelTab::RGB)
+            {
+                depthViz.update();
+                
+                auto *tex = depthViz.getTexture();
+                glOrtho(0, tex->width(), tex->height(), 0, -1.0, 1.0);
+                
+                if (rtt.begin(tex))
+                {
+                    ogl.drawSkeleton(true);
+                }
+                rtt.end();
+            }
+            
+            glPopMatrix();
         }
         ogl.endFrame();
         break;

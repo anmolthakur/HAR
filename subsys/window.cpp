@@ -208,6 +208,11 @@ namespace window
         glfwGetWindowSize(winImpl.win, &w, &h);
         return ImVec2(w, h);
     }
+    
+    double getTime()
+    {
+        return glfwGetTime();
+    }
 }
 
 

@@ -1,9 +1,28 @@
 #ifndef har_h
 #define har_h
 
+#include <fstream>
+using namespace std;
+
 #include "graph_generators.hpp"
 #include "bargraph_generator.hpp"
 #include "states_info.hpp"
+#include "trajectory.hpp"
+
+
+//namespace
+//{
+    extern void *GLUT_BITMAP_HELVETICA_18;
+    
+    extern XnBool g_bDrawSkeleton;
+    extern XnBool g_bPrintID;
+    extern XnBool g_bPrintState;
+    extern XnBool g_bPrintFrameID;
+    
+    extern History g_RightHandPositionHistory;
+    extern History g_LeftHandPositionHistory;
+//}
+
 
 // OpenGL helper
 //
@@ -12,33 +31,41 @@ class OpenGLHelper
 public:
     void init();
     void beginFrame();
-    
-#ifdef notused
-    void drawRectangle(float topLeftX, float topLeftY, float bottomRightX, float bottomRightY);
-    void drawTexture(float topLeftX, float topLeftY, float bottomRightX, float bottomRightY);
+
     void glPrintString(void *font, char *str);
-    
-    void drawSkeleton(const xn::DepthMetaData& dmd, const xn::SceneMetaData& smd, XnUserID player);
-    void showVelocity(xn::UserGenerator& userGenerator,
-                                     xn::DepthGenerator& depthGenerator,
-                                     XnUserID player, XnSkeletonJoint eJoint);
-    void distance3D(xn::UserGenerator& userGenerator,
-                                   xn::DepthGenerator& depthGenerator,
-                    XnUserID player, XnSkeletonJoint eJoint1, XnSkeletonJoint eJoint2);
-    void drawPoint(xn::UserGenerator& userGenerator,
-                    xn::DepthGenerator& depthGenerator,
-                    XnUserID player, XnSkeletonJoint eJoint,
-                    ofstream &x_file, bool addComma=true);
-    void drawLimb(xn::UserGenerator& userGenerator,
-                    xn::DepthGenerator& depthGenerator,
-                    XnUserID player, XnSkeletonJoint eJoint1, XnSkeletonJoint eJoint2);
-    const char *getJointName (XnSkeletonJoint eJoint);
-    void drawJoint(xn::UserGenerator& userGenerator,
-                   xn::DepthGenerator& depthGenerator,
-                   XnUserID player, XnSkeletonJoint eJoint);
-#endif
+    void drawSkeleton(bool isDepthView);
 
     void endFrame();
+    
+private:
+    void drawSkeletoninRGBView();
+    void drawSkeletoninDepthView();
+    
+    void DrawLimb(xn::UserGenerator& userGenerator,
+                  xn::DepthGenerator& depthGenerator,
+                  XnUserID player, XnSkeletonJoint eJoint1, XnSkeletonJoint eJoint2);
+    
+    void DrawJoint(xn::UserGenerator& userGenerator,
+                   xn::DepthGenerator& depthGenerator,
+                   XnUserID player, XnSkeletonJoint eJoint);
+    
+    const char *GetJointName (XnSkeletonJoint eJoint);
+    
+    void DrawPoint(xn::UserGenerator& userGenerator,
+                   xn::DepthGenerator& depthGenerator,
+                   XnUserID player, XnSkeletonJoint eJoint,
+                   ofstream &x_file, bool addComma=true);
+    
+    void Distance3D(xn::UserGenerator& userGenerator,
+                    xn::DepthGenerator& depthGenerator,
+                    XnUserID player, XnSkeletonJoint eJoint1, XnSkeletonJoint eJoint2);
+    
+    void DrawCircle(xn::UserGenerator& userGenerator,
+                    xn::DepthGenerator& depthGenerator,
+                    XnUserID player, XnSkeletonJoint eJoint,
+                    float radius, XnFloat *color3f);
+    
+    void DrawBezierCurve(const std::vector<XnPoint3D> &controlPoints, int numPoints = 16);
 };
 
 
@@ -46,10 +73,13 @@ public:
 //
 class GUIHelper
 {
+public:
+    enum MainPanelTab { RGB, DEPTH };
+
+private:
     ImVec2 windowSize;
     
 // MainPanel
-    enum MainPanelTab { RGB, DEPTH };
     MainPanelTab currentMainPanelTab = RGB;
     
 // LeftPanel
@@ -62,6 +92,9 @@ class GUIHelper
     bool bRightPanelOpen = true;
     enum RightPanelTab { HAND_TRAJECTORIES, PREDICTED_TRAJECTORIES, DISTANCE_GRAPH, ANGULAR_GRAPH };
     RightPanelTab currentRightPanelTab = HAND_TRAJECTORIES;
+    
+public:
+    MainPanelTab getCurrentMainPanelTab() { return currentMainPanelTab; }
     
 public:
 // Screens

@@ -37,6 +37,7 @@
 		0D6C25C42030DF0600AD5607 /* libopencv_imgproc.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 0D6C25C32030DF0600AD5607 /* libopencv_imgproc.dylib */; };
 		0D6C25C62030DF1300AD5607 /* libopencv_core.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 0D6C25C52030DF1300AD5607 /* libopencv_core.dylib */; };
 		0DAF219B204F2D5100B99FD7 /* ogl_helper.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0DAF219A204F2D5100B99FD7 /* ogl_helper.cpp */; };
+		0DB30D16209B4D4800B3E824 /* trajectory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0DB30D15209B4D4800B3E824 /* trajectory.cpp */; };
 		0DCEEFDA1FFBD40700BC12ED /* checker-rgb.jpg in CopyFiles */ = {isa = PBXBuildFile; fileRef = 0DCEEFD91FFBD3ED00BC12ED /* checker-rgb.jpg */; };
 		0DCEEFDB1FFBD40700BC12ED /* checker.png in CopyFiles */ = {isa = PBXBuildFile; fileRef = 0DCEEFD81FFBD3ED00BC12ED /* checker.png */; };
 		0DCEEFE01FFBDF7800BC12ED /* imgui_tabs.h in Headers */ = {isa = PBXBuildFile; fileRef = 0DCEEFDD1FFBDF6900BC12ED /* imgui_tabs.h */; };
@@ -107,6 +108,8 @@
 		0D6C25C32030DF0600AD5607 /* libopencv_imgproc.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libopencv_imgproc.dylib; path = ../../../../../../../usr/local/Cellar/opencv/3.3.1_1/lib/libopencv_imgproc.dylib; sourceTree = "<group>"; };
 		0D6C25C52030DF1300AD5607 /* libopencv_core.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libopencv_core.dylib; path = ../../../../../../../usr/local/Cellar/opencv/3.3.1_1/lib/libopencv_core.dylib; sourceTree = "<group>"; };
 		0DAF219A204F2D5100B99FD7 /* ogl_helper.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ogl_helper.cpp; sourceTree = "<group>"; };
+		0DB30D14209B48D900B3E824 /* trajectory.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = trajectory.hpp; sourceTree = "<group>"; };
+		0DB30D15209B4D4800B3E824 /* trajectory.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = trajectory.cpp; sourceTree = "<group>"; };
 		0DCEEFD81FFBD3ED00BC12ED /* checker.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = checker.png; sourceTree = "<group>"; };
 		0DCEEFD91FFBD3ED00BC12ED /* checker-rgb.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = "checker-rgb.jpg"; sourceTree = "<group>"; };
 		0DCEEFDC1FFBDF6900BC12ED /* imgui_tabs.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = imgui_tabs.cpp; sourceTree = "<group>"; };
@@ -149,8 +152,8 @@
 			children = (
 				0D1A083D1FC9EB5700C8637B /* data */,
 				0D1A08091FC903A800C8637B /* external */,
-				0D1A07F01FC9025200C8637B /* HAR */,
 				0D1A07FD1FC902D700C8637B /* subsys */,
+				0D1A07F01FC9025200C8637B /* HAR */,
 				0D1A07EF1FC9025200C8637B /* Products */,
 				0D1A08251FC904E800C8637B /* Frameworks */,
 			);
@@ -178,6 +181,8 @@
 				0D1DF052201CF8880079A813 /* bargraph_generator.hpp */,
 				0D1DF054201D12860079A813 /* states_info.cpp */,
 				0D1DF055201D12860079A813 /* states_info.hpp */,
+				0DB30D14209B48D900B3E824 /* trajectory.hpp */,
+				0DB30D15209B4D4800B3E824 /* trajectory.cpp */,
 			);
 			path = HAR;
 			sourceTree = "<group>";
@@ -355,6 +360,7 @@
 				0D1A07F21FC9025200C8637B /* main.cpp in Sources */,
 				0DFAAD411FFEB4BA008CDDCF /* graph_generators.cpp in Sources */,
 				0D33C3581FCCA451000E3DD2 /* gui_helper.cpp in Sources */,
+				0DB30D16209B4D4800B3E824 /* trajectory.cpp in Sources */,
 				0DAF219B204F2D5100B99FD7 /* ogl_helper.cpp in Sources */,
 				0D1DF056201D12860079A813 /* states_info.cpp in Sources */,
 			);
@@ -516,7 +522,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = 7P7W7LHWJD;
+				DEVELOPMENT_TEAM = FB4AWHH32G;
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					/usr/local/Cellar/glew/2.1.0/lib,
@@ -532,7 +538,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = 7P7W7LHWJD;
+				DEVELOPMENT_TEAM = FB4AWHH32G;
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					/usr/local/Cellar/glew/2.1.0/lib,
