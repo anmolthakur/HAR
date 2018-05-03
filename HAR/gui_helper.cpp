@@ -70,19 +70,19 @@ void GUIHelper::doStartupScreen()
 
     ImGui::SetNextWindowPos(ImVec2((screenWidth - windowWidth) / 2, (screenHeight - windowHeight) / 2));
     ImGui::SetNextWindowSize(ImVec2(windowWidth, windowHeight));
-    ImGui::Begin("Human Activity Prediction", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
+    ImGui::Begin("Human Activity Prediction Scenario", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
     {
         ImGui::BeginColumns("button-cols", 2);
         {
             ImGui::SetColumnWidth(0, windowWidth / 2);
-            if (ImGui::Button("Single Target"))
+            if (ImGui::Button("Sequential Action"))
             {
                 currentScreen = Screen::SingleTarget;
             }
             ImGui::NextColumn();
             
             ImGui::SetColumnWidth(1, windowWidth / 2);
-            if (ImGui::Button("Multiple Target"))
+            if (ImGui::Button("Concurrent Action"))
             {
                 currentScreen = Screen::MultiTarget;
             }
