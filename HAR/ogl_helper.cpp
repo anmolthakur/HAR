@@ -11,6 +11,9 @@ void OpenGLHelper::init()
 void OpenGLHelper::beginFrame()
 {
     glClear(GL_COLOR_BUFFER_BIT);
+    
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
 }
 
 void OpenGLHelper::endFrame()

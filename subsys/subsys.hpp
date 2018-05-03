@@ -41,7 +41,7 @@
 
 //namespace
 //{
-    const static XnFloat Colors[13][3] =
+    const static XnFloat Colors[][3] =
     {
         {0,1,1},
         {0,0,1}, // blue
@@ -54,10 +54,10 @@
         {.5,0,1},
         {1,1,.5},
         {1,1,1},
-        {0.5,0.5,0.5},    // Grey
-        {1,0,1} // Purple
+        //{0.5,0.5,0.5},    // Grey
+        //{1,0,1} // Purple
     };
-    const static XnUInt32 nColors = 13;
+    const static XnUInt32 nColors = 10;
 //}
 
 
@@ -126,7 +126,7 @@ namespace gfx
         
         uint32_t platformHandle() const { return tex_; }
         int width() const { return width_; }
-        int height() const { return width_; }
+        int height() const { return height_; }
         Format format() const { return format_; }
         
     private:
@@ -145,11 +145,13 @@ namespace gfx
     {
     public:
         virtual void update() = 0;
+        virtual int logicalWidth() = 0;
+        virtual int logicalHeight() = 0;
         
         Texture *getTexture() { return &tex_; }
         ImVec2 getUV1() { return uv1; }
         ImVec2 getUV2() { return uv2; }
-
+        
     protected:
         Texture tex_;
         ImVec2 uv1, uv2;
@@ -162,6 +164,8 @@ namespace gfx
     {
     public:
         void update() override;
+        int logicalWidth() override { return (int)topLeftX; }
+        int logicalHeight() override { return (int)bottomRightY; }
         
     private:
         float topLeftX, topLeftY, bottomRightY, bottomRightX, texXpos, texYpos;
@@ -177,6 +181,8 @@ namespace gfx
     {
     public:
         void update() override;
+        int logicalWidth() override { return (int)topLeftX; }
+        int logicalHeight() override { return (int)bottomRightY; }
         
     private:
         float topLeftX, topLeftY, bottomRightY, bottomRightX, texXpos, texYpos;
@@ -197,8 +203,12 @@ namespace gfx
     public:
         ~RenderToTexture();
         
+        bool begin(DynamicTextureGenerator *target);
         bool begin(Texture *target);
         void end();
+        
+    private:
+        bool begin(GLuint target, int w, int h);
     };
     
     

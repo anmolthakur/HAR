@@ -344,7 +344,17 @@ namespace gfx
         glDeleteFramebuffers(1, &frameBuffer);
     }
     
+    bool RenderToTexture::begin(DynamicTextureGenerator *target)
+    {
+        return begin((GLuint)target->getTexture()->platformHandle(), target->logicalWidth(), target->logicalHeight());
+    }
+    
     bool RenderToTexture::begin(Texture *target)
+    {
+        return begin((GLuint)target->platformHandle(), target->width(), target->height());
+    }
+    
+    bool RenderToTexture::begin(GLuint target, int w, int h)
     {
         if (frameBuffer == 0) // first run
         {
@@ -361,14 +371,14 @@ namespace gfx
         
         glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer);
         
-        if (target->width() != width || target->height() != height)
+        if (w != width || h != height)
         {
-            width = target->width();
-            height = target->height();
+            width = w;
+            height = h;
             glBindRenderbuffer(GL_RENDERBUFFER, depthRenderBuffer);
             glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
         }
-        glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, (GLuint)target->platformHandle(), 0);
+        glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, target, 0);
 
         if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) return false;
         

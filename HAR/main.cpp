@@ -90,23 +90,21 @@ void Application::drawFunction(window::Layer layer)
             {
                 rgbFeed.update();
                 
-                auto *tex = rgbFeed.getTexture();
-                glOrtho(0, tex->width(), tex->height(), 0, -1.0, 1.0);
+                glOrtho(0, rgbFeed.logicalWidth(), rgbFeed.logicalHeight(), 0, -1.0, 1.0);
                 
-                if (rtt.begin(tex))
+                if (rtt.begin(&rgbFeed))
                 {
                     ogl.drawSkeleton(false);
                 }
                 rtt.end();
             }
-            else if (gui.getCurrentMainPanelTab() == GUIHelper::MainPanelTab::RGB)
+            else if (gui.getCurrentMainPanelTab() == GUIHelper::MainPanelTab::DEPTH)
             {
                 depthViz.update();
                 
-                auto *tex = depthViz.getTexture();
-                glOrtho(0, tex->width(), tex->height(), 0, -1.0, 1.0);
+                glOrtho(0, depthViz.logicalWidth(), depthViz.logicalHeight(), 0, -1.0, 1.0);
                 
-                if (rtt.begin(tex))
+                if (rtt.begin(&depthViz))
                 {
                     ogl.drawSkeleton(true);
                 }
