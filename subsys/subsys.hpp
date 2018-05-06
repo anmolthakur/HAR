@@ -53,23 +53,27 @@
         {0,.5,1},
         {.5,0,1},
         {1,1,.5},
-        {1,1,1},
-        //{0.5,0.5,0.5},    // Grey
-        //{1,0,1} // Purple
+        {0.5,0.5,0.5},    // Grey
+        {1,0,1}, // Purple
+        {1,1,1}
     };
-    const static XnUInt32 nColors = 10;
+    const static XnUInt32 nColors = 12;
 //}
 
 
 namespace window
 {
-    void create(const char *name, DrawCallback drawFunc);
+    using CreationFlag = uint;
+    static const CreationFlag UseLegacyOpenGL = 0x1;
+    
+    void create(const char *name, DrawCallback drawFunc, CreationFlag flags = 0);
     
     bool updateAll();
     
     ImVec2 windowSize(const char *name);
     
     double getTime();
+    bool isLegacyOpenGL();
 }
 
 
@@ -111,11 +115,17 @@ namespace gfx
             L8
         };
         
+        enum Type
+        {
+            Tex2D,
+            TexRectangle
+        };
+        
         Texture()
         : tex_(0), width_(0), height_(0)
         {}
-        Texture(const cv::Mat &source);
-        Texture(int width, int height, Format format, bool smoothfilter = true, void *pixelData = nullptr);
+        Texture(const cv::Mat &source, Type t=Type::Tex2D);
+        Texture(int width, int height, Format format, bool smoothfilter = true, void *pixelData = nullptr, Type t=Type::Tex2D);
         Texture(Texture &&);
         ~Texture();
         
@@ -128,6 +138,9 @@ namespace gfx
         int width() const { return width_; }
         int height() const { return height_; }
         Format format() const { return format_; }
+        Type type() const { return type_; }
+        
+        void bind();
         
     private:
         Texture(Texture &) = delete;
@@ -136,6 +149,149 @@ namespace gfx
         GLuint tex_;
         int width_, height_;
         Format format_;
+        Type type_;
+    };
+    
+    
+// BufferUsage
+//
+    enum class BufferUsage
+    {
+        StaticDraw,
+        StreamDraw
+    };
+    GLenum glBufferUsage(BufferUsage);
+
+    
+// Vertex buffer
+//
+    class VertexBuffer
+    {
+    public:
+        using Usage = BufferUsage;
+
+        VertexBuffer()
+        {
+            glGenBuffers(1, &vbo_);
+        }
+        ~VertexBuffer()
+        {
+            glDeleteBuffers(1, &vbo_);
+        }
+        
+        uint32_t platformHandle() const { return vbo_; }
+        Usage usage() const { return usage_; }
+        uint32_t vertexCount() const { return vertexCount_; }
+        size_t vertexSize() const { return vertexSize_; }
+        
+        template <typename Vertex>
+        bool init(uint32_t vertexCount, Usage usage = Usage::StaticDraw, Vertex *data = nullptr)
+        {
+            usage_ = usage;
+            vertexCount_ = vertexCount;
+            vertexSize_ = sizeof(Vertex);
+            glBindBuffer(GL_ARRAY_BUFFER, vbo_);
+            glBufferData(GL_ARRAY_BUFFER, vertexSize_ * vertexCount_, data, glBufferUsage(usage_));
+            return true;
+        }
+        
+        template <typename Vertex>
+        bool updateData(Vertex *data)
+        {
+            assert(vertexSize_ == sizeof(Vertex) && "");
+            glBindBuffer(GL_ARRAY_BUFFER, vbo_);
+            glBufferSubData(GL_ARRAY_BUFFER, 0, vertexSize_ * vertexCount_, data);
+            return true;
+        }
+        
+        template <typename Vertex>
+        Vertex *writeOnlyMap()
+        {
+            glBindBuffer(GL_ARRAY_BUFFER, vbo_);
+            return (Vertex *) glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
+        }
+        
+        void unmap()
+        {
+            glBindBuffer(GL_ARRAY_BUFFER, vbo_);
+            glUnmapBuffer(GL_ARRAY_BUFFER);
+        }
+        
+        void bind() { glBindBuffer(GL_ARRAY_BUFFER, vbo_); }
+        
+    private:
+        GLuint vbo_ = 0;
+        Usage usage_;
+        uint32_t vertexCount_;
+        size_t vertexSize_;
+    };
+
+    
+// Index buffer
+//
+    enum IndexType { UByte, UShort, Uint };
+    
+    template <IndexType T> struct IndexPOD;
+    template <> struct IndexPOD<IndexType::UByte> { using Type = unsigned char; };
+    template <> struct IndexPOD<IndexType::UShort> { using Type = unsigned short; };
+    template <> struct IndexPOD<IndexType::Uint> { using Type = uint32_t; };
+
+    class IndexBuffer
+    {
+    public:
+        using Usage = BufferUsage;
+        
+        IndexBuffer()
+        {
+            glGenBuffers(1, &ibo_);
+        }
+        ~IndexBuffer()
+        {
+            glDeleteBuffers(1, &ibo_);
+        }
+        
+        uint32_t platformHandle() const { return ibo_; }
+        Usage usage() const { return usage_; }
+        uint32_t indexCount() const { return indexCount_; }
+        
+        template <IndexType T>
+        bool init(uint32_t indexCount, Usage usage = Usage::StaticDraw, typename IndexPOD<T>::Type *data = nullptr)
+        {
+            usage_ = usage;
+            indexCount_ = indexCount;
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_);
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexCount_ * sizeof(typename IndexPOD<T>::Type), data, glBufferUsage(usage_));
+            return true;
+        }
+        
+        template <IndexType T>
+        bool updateData(typename IndexPOD<T>::Type *data)
+        {
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_);
+            glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, indexCount_ * sizeof(typename IndexPOD<T>::Type), data);
+            return true;
+        }
+
+        template <IndexType T>
+        typename IndexPOD<T>::Type *writeOnlyMap()
+        {
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_);
+            return (typename IndexPOD<T>::Type *) glMapBuffer(GL_ELEMENT_ARRAY_BUFFER, GL_WRITE_ONLY);
+        }
+        
+        void unmap()
+        {
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_);
+            glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER);
+        }
+        
+        void bind() { glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_); }
+        
+    private:
+        GLuint ibo_ = 0;
+        Usage usage_;
+        uint32_t indexCount_;
+        GLenum indexDataType_;
     };
     
     
@@ -199,8 +355,11 @@ namespace gfx
         GLuint frameBuffer = 0;
         GLuint depthRenderBuffer = 0;
         int width = 0, height = 0;
+        const bool bUseDepth;
         
     public:
+        RenderToTexture(bool useDepth = false) : bUseDepth(useDepth)
+        {}
         ~RenderToTexture();
         
         bool begin(DynamicTextureGenerator *target);
@@ -208,13 +367,14 @@ namespace gfx
         void end();
         
     private:
-        bool begin(GLuint target, int w, int h);
+        bool begin(GLuint target, int w, int h, int vw, int vh);
     };
     
     
 // Functions
 //
-    void drawRect(Texture *);
+    void drawString(int x, int y, const char *str);
+    
 }
 
 #pragma GCC visibility pop

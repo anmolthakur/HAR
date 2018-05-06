@@ -35,6 +35,7 @@ void OpenGLHelper::drawSkeleton(bool isDepthView)
     if (!sensor::initialized()) return;
     
     glDisable(GL_TEXTURE_2D);
+    glDisable(GL_DEPTH_TEST);
     
     if (isDepthView) drawSkeletoninDepthView();
     else drawSkeletoninRGBView();
@@ -410,6 +411,6 @@ void OpenGLHelper::drawSkeletoninDepthView()
 
 void OpenGLHelper::drawSkeletoninRGBView()
 {
-    
+    glColor3f(1.f,1.f,1.f);
 }
 

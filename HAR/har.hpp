@@ -83,7 +83,7 @@ private:
     MainPanelTab currentMainPanelTab = RGB;
     
 // LeftPanel
-    bool bLeftPanelOpen = true;
+    bool  bLeftPanelOpen = true;
     float someproperty0 = 3.14f;
     float someproperty1 = 2.718f;
     float someproperty2 = -1;

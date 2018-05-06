@@ -54,7 +54,7 @@ Application::Application()
 {
     window::create(gWindowName, [this](window::Layer layer) {
         drawFunction(layer);
-    });
+    }, window::UseLegacyOpenGL);
     
     sensor::start([this](sensor::Message mssg, XnUserID id) {
         sensorFunction(mssg, id);
@@ -81,6 +81,7 @@ void Application::drawFunction(window::Layer layer)
     {
     case window::Layer::BG:
         ogl.beginFrame();
+        if (gui.currentScreen != GUIHelper::Screen::Startup)
         {
             glMatrixMode(GL_PROJECTION);
             glPushMatrix();
@@ -90,7 +91,7 @@ void Application::drawFunction(window::Layer layer)
             {
                 rgbFeed.update();
                 
-                glOrtho(0, rgbFeed.logicalWidth(), rgbFeed.logicalHeight(), 0, -1.0, 1.0);
+                glOrtho(0, rgbFeed.logicalWidth(), 0, rgbFeed.logicalHeight(), -1.0, 1.0);
                 
                 if (rtt.begin(&rgbFeed))
                 {
@@ -102,7 +103,7 @@ void Application::drawFunction(window::Layer layer)
             {
                 depthViz.update();
                 
-                glOrtho(0, depthViz.logicalWidth(), depthViz.logicalHeight(), 0, -1.0, 1.0);
+                glOrtho(0, depthViz.logicalWidth(), 0, depthViz.logicalHeight(), -1.0, 1.0);
                 
                 if (rtt.begin(&depthViz))
                 {

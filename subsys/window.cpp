@@ -1,17 +1,41 @@
 #include "subsys.hpp"
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
-#include "imgui/imgui_impl_glfw.h"
+#include "windowbase.hpp"
+//#include "imgui/imgui_impl_glfw.h"
+//#include "imgui/imgui_impl_glfw_gl2.h"
 
 namespace
 {
+    bool g_bLegacyOpengl = false;
     GLFWwindow *gFirstWindow = nullptr; // HACK: TODO.. Implement this properly. What is first windows was closed?
     
-    GLFWwindow *createGLFWwindow(const char *name, void *user_ptr = nullptr)
+    GLFWwindow *createGLFWwindow(const char *name, bool bLegacyOpengl, void *user_ptr = nullptr)
     {
         fprintf(stdout, "GLFW: %s", glfwGetVersionString());
         
         const GLFWvidmode * mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+        
+        // TODO:
+        //      Currently GL3 and GL2 cannot be mixed. All windows should have the same OpenGL.
+        //      Update API to handle different versions opf OGL in different windows if possible.
+        //
+        if (bLegacyOpengl)
+        {
+            //glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+            //glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+        }
+        else
+        {
+            glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+            glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+            glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+            glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+        }
+        //glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
+
+        g_bLegacyOpengl = bLegacyOpengl;
+
         
         GLFWwindow *win;
         if (!(win = glfwCreateWindow(mode->width, mode->height, name, nullptr, gFirstWindow)))
@@ -47,126 +71,117 @@ namespace
 
 // Window class
 //
-struct WindowImpl : public Window
+struct WindowController
 {
-    WindowImpl(const Window &) = delete;
-    
-    WindowImpl(const char *name, window::DrawCallback drawFunc)
-    : Window{createGLFWwindow(name, this), drawFunc, ImGui::CreateContext()}
-    {
-        ImGui::SetCurrentContext(imguictx);
-        imguih::newWindow(win);
-    }
-    
-    ~WindowImpl ()
-    {
-        if (imguictx)
-        {
-            //ImGui::DestroyContext(imguictx); // TODO... find out why is it crashing at shutdown
-        }
-        if (win)
-        {
-            glfwDestroyWindow(win);
-        }
-    }
-    
-    static std::map<std::string, WindowImpl> allWindows;
+private:
+    Window *pWin = nullptr;
     
 public:
-    // GLFW error callback
+    WindowController(const WindowController &) = delete;
+    
+    WindowController(const char *name, window::DrawCallback drawFunc, bool bLegacyOpenGL)
+    {
+        pWin = bLegacyOpenGL? Window::createImGuiWindow_GL2() : Window::createImGuiWindow_GL3();
+        pWin->init();
+        pWin->win = createGLFWwindow(name, bLegacyOpenGL, this);
+        pWin->drawCallback = drawFunc;
+        pWin->imguictx = ImGui::CreateContext();
+        
+        ImGui::SetCurrentContext(pWin->imguictx);
+        pWin->newWindow(pWin->win);
+    }
+    
+    ~WindowController ()
+    {
+        if (pWin)
+        {
+            if (pWin->win)
+            {
+                glfwDestroyWindow(pWin->win);
+            }
+            if (pWin->imguictx)
+            {
+                //ImGui::DestroyContext(imguictx); // TODO... find out why is it crashing at shutdown
+            }
+            pWin->shutdown();
+            delete pWin;
+        }
+    }
+    
+public:
+    bool shouldClose()
+    {
+        return glfwWindowShouldClose(pWin->win);
+    }
+    
+    void update()
+    {
+        // Draw scene
+        pWin->drawCallback(window::Layer::BG);
+        
+        // Draw GUI
+        ImGui::SetCurrentContext(pWin->imguictx);
+        pWin->newFrame(pWin->win);
+        pWin->drawCallback(window::Layer::GUI);
+        ImGui::Render();
+        
+        // flip buffers
+        glfwSwapBuffers(pWin->win);
+    }
+    
+    GLFWwindow *getGlfwWindow() { return pWin->win; }
+};
+
+
+// Global helper
+//
+struct WindowSysHelper
+{
+    static std::map<std::string, WindowController> allWindows;
+
     static void errorCallback(int error, const char* description)
     {
         fprintf(stderr, "GLFW error: %s\n", description);
     }
-    
-    // Init GLFW and GLEW
-    static bool init()
+
+    WindowSysHelper ()
     {
         glfwSetErrorCallback(errorCallback);
         
         if (!glfwInit())
         {
             fprintf(stderr, "GLFW error: glfwInit() failed.");
-            return false;
-        }
-        
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
-        glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-        //glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
-        
-        return imguih::init();
-    }
-    
-    // shutdown GLFW
-    static void shutdown()
-    {
-        imguih::shutdown();
-        glfwTerminate();
-    }
-    
-public:
-    bool shouldClose()
-    {
-        return glfwWindowShouldClose(win);
-    }
-    
-    void update()
-    {
-        // Draw scene
-        drawCallback(window::Layer::BG);
-        
-        // Draw GUI
-        ImGui::SetCurrentContext(imguictx);
-        imguih::newFrame(win);
-        drawCallback(window::Layer::GUI);
-        ImGui::Render();
-        
-        // flip buffers
-        glfwSwapBuffers(win);
-    }
-};
-
-
-// Map of all windows created
-//
-std::map<std::string, WindowImpl> WindowImpl::allWindows;
-
-
-// Global helper
-//
-struct WindosSysHelper
-{
-    WindosSysHelper ()
-    {
-        if (!WindowImpl::init())
-        {
             exit(-1);
         }
     }
     
-    ~WindosSysHelper ()
+    ~WindowSysHelper ()
     {
-        WindowImpl::allWindows.clear();
-        WindowImpl::shutdown();
+        WindowSysHelper::allWindows.clear();
+        glfwTerminate();
     }
 } gwsh;
+
+
+// Map of all windows created
+//
+std::map<std::string, WindowController> WindowSysHelper::allWindows;
+
 
 
 
 namespace window
 {
-    void create(const char *name, DrawCallback drawFunc)
+    void create(const char *name, DrawCallback drawFunc, CreationFlag flags)
     {
-        if (WindowImpl::allWindows.size() == 0) // TODO... remove this limit of only 1 window
+        if (WindowSysHelper::allWindows.size() == 0) // TODO... remove this limit of only 1 window
             // In order to remove this limit, implement context sharing
             // of GLFW windows properly and also properly implement
             // ImGui states.
         {
-            WindowImpl::allWindows.emplace(std::piecewise_construct,
+            WindowSysHelper::allWindows.emplace(std::piecewise_construct,
                                            std::forward_as_tuple(name),
-                                           std::forward_as_tuple(name, drawFunc)
+                                                std::forward_as_tuple(name, drawFunc, flags & UseLegacyOpenGL? true : false)
                                            );
         }
     }
@@ -179,9 +194,9 @@ namespace window
         
         glfwPollEvents();
         
-        for (auto const& [name, win] : WindowImpl::allWindows)
+        for (auto const& [name, win] : WindowSysHelper::allWindows)
         {
-            auto &cwin = const_cast<WindowImpl &>(win);
+            auto &cwin = const_cast<WindowController &>(win);
             
             if (!cwin.shouldClose())
             {
@@ -195,23 +210,28 @@ namespace window
         
         for(auto name : windowsToDestroy)
         {
-            WindowImpl::allWindows.erase(name);
+            WindowSysHelper::allWindows.erase(name);
         }
         
-        return WindowImpl::allWindows.size() > 0;
+        return WindowSysHelper::allWindows.size() > 0;
     }
     
     ImVec2 windowSize(const char *name)
     {
-        auto &winImpl = WindowImpl::allWindows.at(name);
+        auto &winCtrlr = WindowSysHelper::allWindows.at(name);
         int w, h;
-        glfwGetWindowSize(winImpl.win, &w, &h);
+        glfwGetWindowSize(winCtrlr.getGlfwWindow(), &w, &h);
         return ImVec2(w, h);
     }
     
     double getTime()
     {
         return glfwGetTime();
+    }
+    
+    bool isLegacyOpenGL()
+    {
+        return g_bLegacyOpengl;
     }
 }
 

@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0D159188209DB6CE002C4B0B /* imgui_impl_glfw_gl2.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0D159186209DB6CE002C4B0B /* imgui_impl_glfw_gl2.cpp */; };
+		0D159189209DB6CE002C4B0B /* imgui_impl_glfw_gl2.h in Headers */ = {isa = PBXBuildFile; fileRef = 0D159187209DB6CE002C4B0B /* imgui_impl_glfw_gl2.h */; };
 		0D1A07F21FC9025200C8637B /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0D1A07F11FC9025200C8637B /* main.cpp */; };
 		0D1A07FF1FC902D700C8637B /* subsys.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 0D1A07FE1FC902D700C8637B /* subsys.hpp */; };
 		0D1A08081FC9034B00C8637B /* gfx.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0D1A08071FC9034B00C8637B /* gfx.cpp */; };
@@ -41,6 +43,7 @@
 		0DCEEFDA1FFBD40700BC12ED /* checker-rgb.jpg in CopyFiles */ = {isa = PBXBuildFile; fileRef = 0DCEEFD91FFBD3ED00BC12ED /* checker-rgb.jpg */; };
 		0DCEEFDB1FFBD40700BC12ED /* checker.png in CopyFiles */ = {isa = PBXBuildFile; fileRef = 0DCEEFD81FFBD3ED00BC12ED /* checker.png */; };
 		0DCEEFE01FFBDF7800BC12ED /* imgui_tabs.h in Headers */ = {isa = PBXBuildFile; fileRef = 0DCEEFDD1FFBDF6900BC12ED /* imgui_tabs.h */; };
+		0DF8F329209DD42100DE7FF8 /* helvetica-32.png in CopyFiles */ = {isa = PBXBuildFile; fileRef = 0DF8F328209DD40300DE7FF8 /* helvetica-32.png */; };
 		0DFAAD411FFEB4BA008CDDCF /* graph_generators.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0DFAAD3F1FFEB4BA008CDDCF /* graph_generators.cpp */; };
 		B2CB78B9209B35570084F524 /* libglfw.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = B2CB78B8209B35570084F524 /* libglfw.dylib */; };
 		B2CB78BB209B35620084F524 /* libGLEW.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = B2CB78BA209B35620084F524 /* libGLEW.dylib */; };
@@ -66,12 +69,15 @@
 				0DCEEFDA1FFBD40700BC12ED /* checker-rgb.jpg in CopyFiles */,
 				0DCEEFDB1FFBD40700BC12ED /* checker.png in CopyFiles */,
 				0D1DF05820225CA80079A813 /* OpenNIConfig.xml in CopyFiles */,
+				0DF8F329209DD42100DE7FF8 /* helvetica-32.png in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		0D159186209DB6CE002C4B0B /* imgui_impl_glfw_gl2.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = imgui_impl_glfw_gl2.cpp; sourceTree = "<group>"; };
+		0D159187209DB6CE002C4B0B /* imgui_impl_glfw_gl2.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = imgui_impl_glfw_gl2.h; sourceTree = "<group>"; };
 		0D1A07EE1FC9025200C8637B /* HAR */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = HAR; sourceTree = BUILT_PRODUCTS_DIR; };
 		0D1A07F11FC9025200C8637B /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		0D1A07FC1FC902D700C8637B /* libsubsys.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libsubsys.a; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -114,6 +120,7 @@
 		0DCEEFD91FFBD3ED00BC12ED /* checker-rgb.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = "checker-rgb.jpg"; sourceTree = "<group>"; };
 		0DCEEFDC1FFBDF6900BC12ED /* imgui_tabs.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = imgui_tabs.cpp; sourceTree = "<group>"; };
 		0DCEEFDD1FFBDF6900BC12ED /* imgui_tabs.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = imgui_tabs.h; sourceTree = "<group>"; };
+		0DF8F328209DD40300DE7FF8 /* helvetica-32.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "helvetica-32.png"; sourceTree = "<group>"; };
 		0DFAAD3F1FFEB4BA008CDDCF /* graph_generators.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = graph_generators.cpp; sourceTree = "<group>"; };
 		0DFAAD401FFEB4BA008CDDCF /* graph_generators.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = graph_generators.hpp; sourceTree = "<group>"; };
 		B2CB78B8209B35570084F524 /* libglfw.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libglfw.dylib; path = ../../../../../usr/local/lib/libglfw.dylib; sourceTree = "<group>"; };
@@ -218,6 +225,8 @@
 				0D1A080E1FC903A800C8637B /* imgui_draw.cpp */,
 				0D1A080F1FC903A800C8637B /* imgui_impl_glfw.cpp */,
 				0D1A08101FC903A800C8637B /* imgui_impl_glfw.h */,
+				0D159186209DB6CE002C4B0B /* imgui_impl_glfw_gl2.cpp */,
+				0D159187209DB6CE002C4B0B /* imgui_impl_glfw_gl2.h */,
 				0D1A08111FC903A800C8637B /* imgui_internal.h */,
 				0D1A08121FC903A800C8637B /* stb_rect_pack.h */,
 				0D1A08131FC903A800C8637B /* stb_textedit.h */,
@@ -249,6 +258,7 @@
 			isa = PBXGroup;
 			children = (
 				0D1DF05720225CA30079A813 /* OpenNIConfig.xml */,
+				0DF8F328209DD40300DE7FF8 /* helvetica-32.png */,
 				0DCEEFD91FFBD3ED00BC12ED /* checker-rgb.jpg */,
 				0DCEEFD81FFBD3ED00BC12ED /* checker.png */,
 			);
@@ -272,6 +282,7 @@
 				0D1A08241FC9042D00C8637B /* windowbase.hpp in Headers */,
 				0DCEEFE01FFBDF7800BC12ED /* imgui_tabs.h in Headers */,
 				0D1A081E1FC903A800C8637B /* stb_truetype.h in Headers */,
+				0D159189209DB6CE002C4B0B /* imgui_impl_glfw_gl2.h in Headers */,
 				0D1A081B1FC903A800C8637B /* imgui_internal.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -377,6 +388,7 @@
 				0D1A08191FC903A800C8637B /* imgui_impl_glfw.cpp in Sources */,
 				0D1A08201FC903EB00C8637B /* sensor.cpp in Sources */,
 				0D33C35B1FCCAB3A000E3DD2 /* utils.cpp in Sources */,
+				0D159188209DB6CE002C4B0B /* imgui_impl_glfw_gl2.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -522,7 +534,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = 7P7W7LHWJD;
+				DEVELOPMENT_TEAM = FB4AWHH32G;
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					/usr/local/Cellar/glew/2.1.0/lib,
@@ -538,7 +550,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = 7P7W7LHWJD;
+				DEVELOPMENT_TEAM = FB4AWHH32G;
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					/usr/local/Cellar/glew/2.1.0/lib,

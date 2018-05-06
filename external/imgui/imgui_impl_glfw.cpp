@@ -369,21 +369,32 @@ void ImGui_ImplGlfwGL3_NewFrame(GLFWwindow *window)
 }
 
 
-namespace imguih
+static int giInitialized = 0;
+
+struct WindowGL3 : public Window
 {
-    bool init()
+    bool init() override
     {
-        //return ImGui_ImplGlfwGL3_CreateDeviceObjects();
+        if (giInitialized++ == 0)
+        {
+            giInitialized = true;
+            //return ImGui_ImplGlfwGL3_CreateDeviceObjects();
+        }
         return true;
     }
-
-    void shutdown()
+    
+    void shutdown() override
     {
-        ImGui_ImplGlfwGL3_InvalidateDeviceObjects();
-        // ImGui::Shutdown(); // TODO... figure out what is causing the crash during shutdown
+        if (--giInitialized == 0)
+        {
+            ImGui_ImplGlfwGL3_InvalidateDeviceObjects();
+            // ImGui::Shutdown(); // TODO... figure out what is causing the crash during shutdown
+            
+            giInitialized = false;
+        }
     }
-
-    void newWindow(GLFWwindow *window)
+    
+    void newWindow(GLFWwindow *window) override
     {
         ImGuiIO& io = ImGui::GetIO();
         io.KeyMap[ImGuiKey_Tab] = GLFW_KEY_TAB;                         // Keyboard mapping. ImGui will use those indices to peek into the io.KeyDown[] array.
@@ -405,25 +416,29 @@ namespace imguih
         io.KeyMap[ImGuiKey_X] = GLFW_KEY_X;
         io.KeyMap[ImGuiKey_Y] = GLFW_KEY_Y;
         io.KeyMap[ImGuiKey_Z] = GLFW_KEY_Z;
-
+        
         io.RenderDrawListsFn = ImGui_ImplGlfwGL3_RenderDrawLists;       // Alternatively you can set this to NULL and call ImGui::GetDrawData() after ImGui::Render() to get the same ImDrawData pointer.
         io.SetClipboardTextFn = ImGui_ImplGlfwGL3_SetClipboardText;
         io.GetClipboardTextFn = ImGui_ImplGlfwGL3_GetClipboardText;
         io.ClipboardUserData = window;
-    #ifdef _WIN32
+#ifdef _WIN32
         io.ImeWindowHandle = glfwGetWin32Window(window);
-    #endif
-
+#endif
+        
         glfwSetMouseButtonCallback(window, ImGui_ImplGlfwGL3_MouseButtonCallback);
         glfwSetScrollCallback(window, ImGui_ImplGlfwGL3_ScrollCallback);
         glfwSetKeyCallback(window, ImGui_ImplGlfwGL3_KeyCallback);
         glfwSetCharCallback(window, ImGui_ImplGlfwGL3_CharCallback);
-
     }
-
-    void newFrame(GLFWwindow *window)
+    
+    void newFrame(GLFWwindow *window) override
     {
         ImGui_ImplGlfwGL3_NewFrame(window);
     }
+};
 
+Window *Window::createImGuiWindow_GL3()
+{
+    return new WindowGL3;
 }
+

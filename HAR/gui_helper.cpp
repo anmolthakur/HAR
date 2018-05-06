@@ -117,8 +117,10 @@ void GUIHelper::doMainContent(gfx::DynamicTextureGenerator &depthTexgen, gfx::Dy
     
 // Content (RGB/Depth)
     {
-        ImGui::SetNextWindowPos(ImVec2(0, 30));
-        ImGui::SetNextWindowSize(ImVec2(windowSize.x, windowSize.y - 30));
+        auto wh = windowSize.y - 30;
+        auto ww = wh * 4.0f / 3.0f;
+        ImGui::SetNextWindowPos(ImVec2((windowSize.x - ww) / 2, 30));
+        ImGui::SetNextWindowSize(ImVec2(ww, wh));
         ImGui::Begin("main-content", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoInputs);
         {
             ImTextureID tex = 0;
@@ -145,7 +147,9 @@ void GUIHelper::doMainContent(gfx::DynamicTextureGenerator &depthTexgen, gfx::Dy
             
             auto maxSize = ImGui::GetWindowContentRegionMax();
             auto minSize = ImGui::GetWindowContentRegionMin();
-            ImGui::Image(tex, ImVec2(maxSize.x - minSize.x, maxSize.y - minSize.y), uv1, uv2);
+            auto iw = maxSize.x - minSize.x;
+            auto ih = maxSize.y - minSize.y;
+            ImGui::Image(tex, ImVec2(iw, ih), uv1, uv2);
         }
         ImGui::End();
     }
