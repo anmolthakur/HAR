@@ -167,9 +167,9 @@ namespace gfx
 //
     class VertexBuffer
     {
-    public:
         using Usage = BufferUsage;
 
+    public:
         VertexBuffer()
         {
             glGenBuffers(1, &vbo_);
@@ -196,11 +196,11 @@ namespace gfx
         }
         
         template <typename Vertex>
-        bool updateData(Vertex *data)
+        bool updateData(const Vertex *data, int count)
         {
             assert(vertexSize_ == sizeof(Vertex) && "");
             glBindBuffer(GL_ARRAY_BUFFER, vbo_);
-            glBufferSubData(GL_ARRAY_BUFFER, 0, vertexSize_ * vertexCount_, data);
+            glBufferSubData(GL_ARRAY_BUFFER, 0, vertexSize_ * count, data);
             return true;
         }
         
@@ -236,11 +236,13 @@ namespace gfx
     template <> struct IndexPOD<IndexType::UShort> { using Type = unsigned short; };
     template <> struct IndexPOD<IndexType::Uint> { using Type = uint32_t; };
 
+    GLenum glIndexType(IndexType);
+
     class IndexBuffer
     {
-    public:
         using Usage = BufferUsage;
-        
+
+    public:        
         IndexBuffer()
         {
             glGenBuffers(1, &ibo_);
@@ -259,16 +261,17 @@ namespace gfx
         {
             usage_ = usage;
             indexCount_ = indexCount;
+            indexDataType_ = T;
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_);
             glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexCount_ * sizeof(typename IndexPOD<T>::Type), data, glBufferUsage(usage_));
             return true;
         }
         
         template <IndexType T>
-        bool updateData(typename IndexPOD<T>::Type *data)
+        bool updateData(const typename IndexPOD<T>::Type *data, int count)
         {
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_);
-            glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, indexCount_ * sizeof(typename IndexPOD<T>::Type), data);
+            glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, count * sizeof(typename IndexPOD<T>::Type), data);
             return true;
         }
 
@@ -287,12 +290,47 @@ namespace gfx
         
         void bind() { glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_); }
         
+        void draw(int count)
+        {
+            bind();
+            glDrawElements(GL_TRIANGLES, count, glIndexType(indexDataType_), (void*)0);
+        }
+        
     private:
         GLuint ibo_ = 0;
         Usage usage_;
         uint32_t indexCount_;
-        GLenum indexDataType_;
+        IndexType indexDataType_;
     };
+    
+    
+// Program
+//
+    class Program
+    {
+    public:
+        Program()
+        {}
+        ~Program()
+        {
+            if (prg)
+            {
+                glDeleteProgram(prg);
+            }
+        }
+        
+        uint32_t platformHandle() const { return prg; }
+        
+        bool init(const std::string &shaderName);
+        
+        void bind() { glUseProgram(prg); }
+        
+        int uniformLocation(const std::string &name) { return glGetUniformLocation(prg, name.c_str()); }
+        
+    private:
+        GLuint prg = 0;
+    };
+    
     
     
 // Dynamic Texture generator
@@ -374,7 +412,6 @@ namespace gfx
 // Functions
 //
     void drawString(int x, int y, const char *str);
-    
 }
 
 #pragma GCC visibility pop

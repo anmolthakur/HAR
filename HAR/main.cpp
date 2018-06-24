@@ -84,7 +84,6 @@ void Application::drawFunction(window::Layer layer)
         if (gui.currentScreen != GUIHelper::Screen::Startup)
         {
             glMatrixMode(GL_PROJECTION);
-            glPushMatrix();
             glLoadIdentity();
             
             if (gui.getCurrentMainPanelTab() == GUIHelper::MainPanelTab::RGB)
@@ -111,8 +110,6 @@ void Application::drawFunction(window::Layer layer)
                 }
                 rtt.end();
             }
-            
-            glPopMatrix();
         }
         ogl.endFrame();
         break;

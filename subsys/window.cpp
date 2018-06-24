@@ -58,6 +58,7 @@ namespace
             
             fprintf(stdout, "Renderer: %s\n", glGetString(GL_RENDERER));
             fprintf(stdout, "OpenGL version supported %s\n", glGetString(GL_VERSION));
+            fprintf(stdout, "GLSL version %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
             fprintf(stdout, "Using GLEW %s\n", glewGetString(GLEW_VERSION));
         }
         

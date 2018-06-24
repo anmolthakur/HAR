@@ -38,6 +38,7 @@
 		0D6C25C22030DEFA00AD5607 /* libopencv_highgui.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 0D6C25C12030DEFA00AD5607 /* libopencv_highgui.dylib */; };
 		0D6C25C42030DF0600AD5607 /* libopencv_imgproc.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 0D6C25C32030DF0600AD5607 /* libopencv_imgproc.dylib */; };
 		0D6C25C62030DF1300AD5607 /* libopencv_core.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 0D6C25C52030DF1300AD5607 /* libopencv_core.dylib */; };
+		0D71A6A720AE318A0052E1BE /* font.shader in CopyFiles */ = {isa = PBXBuildFile; fileRef = 0D71A6A620AE31800052E1BE /* font.shader */; };
 		0DAF219B204F2D5100B99FD7 /* ogl_helper.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0DAF219A204F2D5100B99FD7 /* ogl_helper.cpp */; };
 		0DB30D16209B4D4800B3E824 /* trajectory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0DB30D15209B4D4800B3E824 /* trajectory.cpp */; };
 		0DCEEFDA1FFBD40700BC12ED /* checker-rgb.jpg in CopyFiles */ = {isa = PBXBuildFile; fileRef = 0DCEEFD91FFBD3ED00BC12ED /* checker-rgb.jpg */; };
@@ -70,6 +71,7 @@
 				0DCEEFDB1FFBD40700BC12ED /* checker.png in CopyFiles */,
 				0D1DF05820225CA80079A813 /* OpenNIConfig.xml in CopyFiles */,
 				0DF8F329209DD42100DE7FF8 /* helvetica-32.png in CopyFiles */,
+				0D71A6A720AE318A0052E1BE /* font.shader in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -113,6 +115,7 @@
 		0D6C25C12030DEFA00AD5607 /* libopencv_highgui.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libopencv_highgui.dylib; path = ../../../../../../../usr/local/Cellar/opencv/3.3.1_1/lib/libopencv_highgui.dylib; sourceTree = "<group>"; };
 		0D6C25C32030DF0600AD5607 /* libopencv_imgproc.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libopencv_imgproc.dylib; path = ../../../../../../../usr/local/Cellar/opencv/3.3.1_1/lib/libopencv_imgproc.dylib; sourceTree = "<group>"; };
 		0D6C25C52030DF1300AD5607 /* libopencv_core.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libopencv_core.dylib; path = ../../../../../../../usr/local/Cellar/opencv/3.3.1_1/lib/libopencv_core.dylib; sourceTree = "<group>"; };
+		0D71A6A620AE31800052E1BE /* font.shader */ = {isa = PBXFileReference; lastKnownFileType = text; path = font.shader; sourceTree = "<group>"; };
 		0DAF219A204F2D5100B99FD7 /* ogl_helper.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ogl_helper.cpp; sourceTree = "<group>"; };
 		0DB30D14209B48D900B3E824 /* trajectory.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = trajectory.hpp; sourceTree = "<group>"; };
 		0DB30D15209B4D4800B3E824 /* trajectory.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = trajectory.cpp; sourceTree = "<group>"; };
@@ -261,6 +264,7 @@
 				0DF8F328209DD40300DE7FF8 /* helvetica-32.png */,
 				0DCEEFD91FFBD3ED00BC12ED /* checker-rgb.jpg */,
 				0DCEEFD81FFBD3ED00BC12ED /* checker.png */,
+				0D71A6A620AE31800052E1BE /* font.shader */,
 			);
 			path = data;
 			sourceTree = "<group>";

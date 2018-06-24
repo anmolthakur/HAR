@@ -22,12 +22,19 @@ void OpenGLHelper::endFrame()
 
 void OpenGLHelper::glPrintString(void *font, char *str)
 {
-    size_t i,l = strlen(str);
+    GLint pos[4];
+    glGetIntegerv(GL_CURRENT_RASTER_POSITION, pos);
+    
+    float x = pos[0];
+    float y = pos[1];
+    gfx::drawString(x, y, str);
+    
+    /*size_t i,l = strlen(str);
     
     for(i=0; i<l; i++)
     {
         //glutBitmapCharacter(font,*str++);
-    }
+    }*/
 }
 
 void OpenGLHelper::drawSkeleton(bool isDepthView)

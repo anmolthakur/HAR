@@ -2,6 +2,23 @@
 
 namespace gfx
 {
+    std::vector<char> loadTextFile(const std::string &path)
+    {
+        std::fstream fs(path, std::fstream::in | std::fstream::ate);
+        if (fs.is_open())
+        {
+            auto size = fs.tellg();
+            fs.seekg(0, std::fstream::beg);
+            
+            std::vector<char> buffer(size);
+            fs.read(buffer.data(), size);
+            
+            return buffer;
+        }
+        
+        return std::vector<char>();
+    }
+    
     GLenum glBufferUsage(BufferUsage usage)
     {
         switch (usage) {
@@ -10,6 +27,14 @@ namespace gfx
         };
     }
 
+    GLenum glIndexType(IndexType type)
+    {
+        switch (type) {
+            case IndexType::UByte: return GL_UNSIGNED_BYTE;
+            case IndexType::UShort: return GL_UNSIGNED_SHORT;
+            case IndexType::Uint: return GL_UNSIGNED_INT;
+        };
+    }
 }
 
 namespace
@@ -180,6 +205,105 @@ namespace gfx
         GLenum GL_TEX_TYPE = gl4TexType(type_);
         glBindTexture(GL_TEX_TYPE, tex_);
     }
+    
+    
+// Program
+//
+    bool Program::init(const std::string &shaderName)
+    {
+        auto isCompilationError = [](GLuint shader, const std::string &filepath)
+        {
+            GLint length, result;
+            glGetShaderiv(shader, GL_COMPILE_STATUS, &result);
+            if(result == GL_FALSE) {
+                /* get the shader info log */
+                glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &length);
+                char *log = (char *)malloc(length);
+                glGetShaderInfoLog(shader, length, &result, log);
+                
+                /* print an error message and the info log */
+                fprintf(stderr, "Program::init(): Unable to compile %s: %s\n", filepath.c_str(), log);
+                free(log);
+                return true;
+            }
+            return false;
+        };
+        
+        GLuint vs = 0, fs = 0;
+        
+        std::string ver = "#version 120\n";
+        auto filename = shaderName + ".shader";
+        auto src = loadTextFile(filename);
+        
+        
+        // create vertex shader
+        {
+            const char *defVS = "#define VERTEX_SHADER 1\n#define FRAGMENT_SHADER 0\n";
+            GLchar const* sources[] = { ver.c_str(), defVS, src.data() };
+            GLint lengths[] = { (GLint)ver.size(), (GLint)strlen(defVS), (GLint)src.size() };
+
+            vs = glCreateShader(GL_VERTEX_SHADER);
+            glShaderSource(vs, 3, sources, lengths);
+            glCompileShader(vs);
+            if (isCompilationError(vs, filename + "/vs"))
+            {
+                glDeleteShader(vs);
+                return false;
+            }
+        }
+
+        // create fragment shader
+        {
+            const char *defFS = "#define VERTEX_SHADER 0\n#define FRAGMENT_SHADER 1\n";
+            GLchar const* sources[] = { ver.c_str(), defFS, src.data() };
+            GLint lengths[] = { (GLint)ver.size(), (GLint)strlen(defFS), (GLint)src.size() };
+
+            fs = glCreateShader(GL_FRAGMENT_SHADER);
+            glShaderSource(fs, 3, sources, lengths);
+            glCompileShader(fs);
+            if (isCompilationError(fs, filename + "/fs"))
+            {
+                glDeleteShader(fs);
+                return false;
+            }
+        }
+        
+        // create program
+        {
+            prg = glCreateProgram();
+            glAttachShader(prg, vs);
+            glAttachShader(prg, fs);
+            
+            glDeleteShader(vs);
+            glDeleteShader(fs);
+        }
+        
+        // link program
+        {
+            glLinkProgram(prg);
+            
+            GLint length, result;
+            glGetProgramiv(prg, GL_LINK_STATUS, &result);
+            if(result == GL_FALSE) {
+                /* get the program info log */
+                glGetProgramiv(prg, GL_INFO_LOG_LENGTH, &length);
+                char *log = (char *)malloc(length);
+                glGetProgramInfoLog(prg, length, &result, log);
+                
+                /* print an error message and the info log */
+                fprintf(stderr, "Program::init(): Program linking failed: %s\n", log);
+                free(log);
+                
+                /* delete the program */
+                glDeleteProgram(prg);
+                prg = 0;
+                return false;
+            }
+        }
+        
+        return true;
+    }
+
     
     
 // DepthVisualization
@@ -441,79 +565,218 @@ namespace gfx
     }
     
     
-// drawString
+// gfx::drawString()
 //
+    #include "helvetica-32.cxx"
     namespace
     {
-        bool bError = false;
-
-        struct DrawStringVertex
+        struct TextRenderer
         {
-            float x, y;
-            float u, v;
+            static bool bError;
+
+            struct Vertex
+            {
+                float x, y;
+                float u, v;
+            };
+            static const int CharactersMax = 32;
+            static const int BufferVertexCountMax = CharactersMax * 4;
+            static Vertex VertexData[BufferVertexCountMax];
+
+            static const int BufferIndexCountMax = CharactersMax * 6;
+
+            static bool bStatesSet;
+            
+            static std::unique_ptr<VertexBuffer> VB;
+            static std::unique_ptr<IndexBuffer> IB;
+            static std::unique_ptr<Texture> FontTexture;
+            static std::unique_ptr<Program> ShaderProgram;
+            
+            static GLint texRectLoc;
+            
+        private:
+            static Font    *font;;
+            static int     nCharactersToDraw;
+            static int     x, y;
+
+        public:
+            static void setXY(int x, int y)
+            {
+                TextRenderer::x = x;
+                TextRenderer::y = y;
+            }
+            
+            static void drawChar(char c)
+            {
+                using f = float;
+                
+                if (c < 32 || c > 126) return;
+                
+                float scale = 0.35f; // scale of the font
+                
+                auto *chrInfo = &font->characters[c - 32];
+                int ox = 0;//-chrInfo->originX * scale;
+                int oy = -chrInfo->originY * scale;
+                int &u = chrInfo->x;
+                int &v = chrInfo->y;
+                int &w = chrInfo->width;
+                int &h = chrInfo->height;
+                
+                int sw = w * scale;
+                int sh = h * scale;
+                
+                Vertex *quad = &TextRenderer::VertexData[4 * nCharactersToDraw];
+                quad[0] = {f(x + ox),       f(y + oy),         f(u),       f(v)};
+                quad[1] = {f(x + sw + ox),  f(y + oy),         f(u + w),   f(v)};
+                quad[2] = {f(x + sw + ox),  f(y + sh + oy),    f(u + w),   f(v + h)};
+                quad[3] = {f(x + ox),       f(y + sh + oy),    f(u),       f(v + h)};
+                
+                //x += font->characters['W' - 32].width * scale;
+                x += (c == ' ')? font->characters['W' - 32].width * 0.5f * scale : sw;
+                
+                if (++nCharactersToDraw == TextRenderer::CharactersMax)
+                {
+                    drawChars();
+                }
+            }
+            
+            static void flush()
+            {
+                if (nCharactersToDraw)
+                {
+                    drawChars();
+                }
+            }
+            
+            static bool setStates();
+            
+        private:
+            static void drawChars()
+            {
+                if (!TextRenderer::bStatesSet)
+                {
+                    glEnable(GL_BLEND);
+                    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                    //glEnable(GL_ALPHA_TEST);
+                    //glAlphaFunc(GL_GREATER, 0.4);
+                    
+                    TextRenderer::setStates();
+                    TextRenderer::bStatesSet = true;
+                }
+                TextRenderer::VB->updateData(TextRenderer::VertexData, 4 * nCharactersToDraw);
+                TextRenderer::IB->draw(6 * nCharactersToDraw);
+                nCharactersToDraw = 0;
+            }
         };
-        static const int DrawStringCharactersMax = 32;
-        static const int DrawStringBufferVertexCountMax = DrawStringCharactersMax * 4;
-        static DrawStringVertex g_drawStringBuffer[DrawStringBufferVertexCountMax];
-
-        static const int DrawStringBufferIndexCountMax = DrawStringCharactersMax * 6;
-
-        std::unique_ptr<VertexBuffer> g_drawStringVB;
-        std::unique_ptr<IndexBuffer> g_drawStringIB;
-        std::unique_ptr<Texture> g_drawStringFontTexture;
+        bool TextRenderer::bError = false;
+        TextRenderer::Vertex TextRenderer::VertexData[TextRenderer::BufferVertexCountMax];
+        bool TextRenderer::bStatesSet = false;
+        std::unique_ptr<VertexBuffer> TextRenderer::VB;
+        std::unique_ptr<IndexBuffer> TextRenderer::IB;
+        std::unique_ptr<Texture> TextRenderer::FontTexture;
+        std::unique_ptr<Program> TextRenderer::ShaderProgram;
+        GLint TextRenderer::texRectLoc;
         
-        #include "helvetica-32.cxx"
+        Font *TextRenderer::font = &font_Helvetica;
+        int TextRenderer::nCharactersToDraw = 0;
+        int TextRenderer::x;
+        int TextRenderer::y;
+
+        bool TextRenderer::setStates()
+        {
+            if (TextRenderer::bError) return false;
+            
+            if (!TextRenderer::FontTexture)
+            {
+                cv::Mat image;
+                image = cv::imread("data/helvetica-32.png", CV_LOAD_IMAGE_UNCHANGED);   // Read the file
+                if(image.data )
+                {
+                    TextRenderer::FontTexture = std::make_unique<Texture>(image, Texture::Type::TexRectangle);
+                }
+                else {
+                    TextRenderer::bError = true;
+                    return false;
+                }
+            }
+            TextRenderer::FontTexture->bind();
+            
+            
+            if (!TextRenderer::IB)
+            {
+                TextRenderer::IB = std::make_unique<IndexBuffer>();
+                ushort data[TextRenderer::BufferIndexCountMax];
+                for (int k = 0; k < TextRenderer::CharactersMax; ++k)
+                {
+                    ushort *face = &data[6 * k];
+                    ushort i = 4 * k;
+                    *face++ = i+0; *face++ = i+1; *face++ = i+2;
+                    *face++ = i+0; *face++ = i+2; *face++ = i+3;
+                }
+                TextRenderer::IB->init<gfx::IndexType::UShort>(TextRenderer::BufferIndexCountMax, BufferUsage::StaticDraw, data);
+            }
+            TextRenderer::IB->bind();
+            
+            
+            if (!TextRenderer::VB)
+            {
+                TextRenderer::VB = std::make_unique<VertexBuffer>();
+                TextRenderer::VB->init<TextRenderer::Vertex>(TextRenderer::BufferVertexCountMax, BufferUsage::StreamDraw);
+            }
+            TextRenderer::VB->bind();
+            
+    #define BUFFER_OFFSET(i) ((void*)(i))
+            
+            glEnableClientState(GL_VERTEX_ARRAY);
+            glVertexPointer(2, GL_FLOAT, sizeof(TextRenderer::Vertex), BUFFER_OFFSET(0));    // The starting point of the VBO, for the vertices
+            glClientActiveTexture(GL_TEXTURE0);
+            glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+            glTexCoordPointer(2, GL_FLOAT, sizeof(TextRenderer::Vertex), BUFFER_OFFSET(8)); // The starting point of texcoords, 8 bytes away
+            
+            
+            if (!TextRenderer::ShaderProgram)
+            {
+                TextRenderer::ShaderProgram = std::make_unique<Program>();
+                if (!TextRenderer::ShaderProgram->init("data/font"))
+                {
+                    TextRenderer::bError = true;
+                    return false;
+                }
+                TextRenderer::ShaderProgram->bind();
+                TextRenderer::texRectLoc = TextRenderer::ShaderProgram->uniformLocation("texRect");
+            }
+            TextRenderer::ShaderProgram->bind();
+            glUniform1i (TextRenderer::texRectLoc, 0);
+            
+            return true;
+        }
     }
     void drawString(int x, int y, const char *str)
     {
-        if (bError) return;
-        
-        if (!g_drawStringFontTexture)
+        if (!TextRenderer::bError)
         {
-            cv::Mat image;
-            image = cv::imread("helvetica-32.png", CV_LOAD_IMAGE_COLOR);   // Read the file
-            if(image.data )
+            TextRenderer::bStatesSet = false;
+            TextRenderer::setXY(x, y);
+            
+            char *nextChar = const_cast<char *>(str);
+            while (*nextChar)
             {
-                g_drawStringFontTexture = std::make_unique<Texture>(image);
+                TextRenderer::drawChar(*nextChar++);
             }
-            else {
-                bError = true;
-                return;
+            
+            TextRenderer::flush();
+            if (TextRenderer::bStatesSet)
+            {
+                glDisable(GL_BLEND);
+                //glDisable(GL_ALPHA_TEST);
+
+                glBindBuffer(GL_ARRAY_BUFFER, 0);
+                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+                glUseProgram(0);
+                glDisableClientState(GL_VERTEX_ARRAY);
+                glDisableClientState(GL_TEXTURE_COORD_ARRAY);
             }
         }
-        g_drawStringFontTexture->bind();
-        
-        if (!g_drawStringVB)
-        {
-            g_drawStringVB = std::make_unique<VertexBuffer>();
-            g_drawStringVB->init<DrawStringVertex>(DrawStringBufferVertexCountMax);
-        }
-        g_drawStringVB->bind();
-
-        if (!g_drawStringIB)
-        {
-            g_drawStringIB = std::make_unique<IndexBuffer>();
-            g_drawStringIB->init<gfx::IndexType::UShort>(DrawStringBufferIndexCountMax);
-        }
-        g_drawStringIB->bind();
-        
-        #define BUFFER_OFFSET(i) ((void*)(i))
-        
-        glEnableClientState(GL_VERTEX_ARRAY);
-        glVertexPointer(2, GL_FLOAT, sizeof(DrawStringVertex), BUFFER_OFFSET(0));    // The starting point of the VBO, for the vertices
-        glClientActiveTexture(GL_TEXTURE0);
-        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-        glTexCoordPointer(2, GL_FLOAT, sizeof(DrawStringVertex), BUFFER_OFFSET(8)); // The starting point of texcoords, 8 bytes away
-
-        // TODO...
-        //int nCharactersToDraw = 0;
-
-        {
-            // TODO...
-            //
-        }
-
-        //glDrawArrays(GL_TRIANGLES, 0, 6 * nCharactersToDraw);
     }
     
 } // namespace gfx
