@@ -567,7 +567,11 @@ namespace gfx
     
 // gfx::drawString()
 //
+#if defined(USE_FONT_SIZE_32)
     #include "helvetica-32.cxx"
+#elif defined(USE_FONT_SIZE_12)
+    #include "helvetica-12.cxx"
+#endif
     namespace
     {
         struct TextRenderer
@@ -595,7 +599,7 @@ namespace gfx
             static GLint texRectLoc;
             
         private:
-            static Font    *font;;
+            static Font    *font;
             static int     nCharactersToDraw;
             static int     x, y;
 
@@ -606,13 +610,17 @@ namespace gfx
                 TextRenderer::y = y;
             }
             
-            static void drawChar(char c)
+            static void drawChar(char c, float textScale=1.0f)
             {
                 using f = float;
                 
                 if (c < 32 || c > 126) return;
                 
-                float scale = 0.35f; // scale of the font
+#if defined(USE_FONT_SIZE_32)
+                float scale = 0.35f * textScale; // scale of the font
+#elif defined(USE_FONT_SIZE_12)
+                float scale = 1.0f * textScale; // scale of the font
+#endif
                 
                 auto *chrInfo = &font->characters[c - 32];
                 int ox = 0;//-chrInfo->originX * scale;
@@ -689,7 +697,11 @@ namespace gfx
             if (!TextRenderer::FontTexture)
             {
                 cv::Mat image;
+#if defined(USE_FONT_SIZE_32)
                 image = cv::imread("data/helvetica-32.png", CV_LOAD_IMAGE_UNCHANGED);   // Read the file
+#elif defined(USE_FONT_SIZE_12)
+                image = cv::imread("data/helvetica-12.png", CV_LOAD_IMAGE_UNCHANGED);   // Read the file
+#endif
                 if(image.data )
                 {
                     TextRenderer::FontTexture = std::make_unique<Texture>(image, Texture::Type::TexRectangle);
@@ -751,7 +763,7 @@ namespace gfx
             return true;
         }
     }
-    void drawString(int x, int y, const char *str)
+    void drawString(int x, int y, const char *str, float scale)
     {
         if (!TextRenderer::bError)
         {
@@ -761,7 +773,7 @@ namespace gfx
             char *nextChar = const_cast<char *>(str);
             while (*nextChar)
             {
-                TextRenderer::drawChar(*nextChar++);
+                TextRenderer::drawChar(*nextChar++, scale);
             }
             
             TextRenderer::flush();

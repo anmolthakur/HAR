@@ -20,14 +20,14 @@ void OpenGLHelper::endFrame()
 {
 }
 
-void OpenGLHelper::glPrintString(void *font, char *str)
+void OpenGLHelper::glPrintString(void *font, char *str, float scale)
 {
     GLint pos[4];
     glGetIntegerv(GL_CURRENT_RASTER_POSITION, pos);
     
     float x = pos[0];
     float y = pos[1];
-    gfx::drawString(x, y, str);
+    gfx::drawString(x, y, str, scale);
     
     /*size_t i,l = strlen(str);
     
@@ -44,8 +44,10 @@ void OpenGLHelper::drawSkeleton(bool isDepthView)
     glDisable(GL_TEXTURE_2D);
     glDisable(GL_DEPTH_TEST);
     
-    if (isDepthView) drawSkeletoninDepthView();
-    else drawSkeletoninRGBView();
+    drawSkeletonCommon();
+    
+    if (isDepthView) drawSkeletonInDepthView();
+    else drawSkeletonInRGBView();
     
     glEnable(GL_TEXTURE_2D);
 }
@@ -127,8 +129,8 @@ const char *OpenGLHelper::GetJointName (XnSkeletonJoint eJoint)
 
 void OpenGLHelper::DrawPoint(xn::UserGenerator& userGenerator,
                xn::DepthGenerator& depthGenerator,
-               XnUserID player, XnSkeletonJoint eJoint,
-               ofstream &x_file, bool addComma)
+               XnUserID player, XnSkeletonJoint eJoint, uint drawPointOptions,
+               ofstream *p_x_file, bool addComma)
 {
     char strLabel[50] = "";
     xnOSMemSet(strLabel, 0, sizeof(strLabel));
@@ -145,7 +147,10 @@ void OpenGLHelper::DrawPoint(xn::UserGenerator& userGenerator,
         userGenerator.GetSkeletonCap().GetSkeletonJointPosition(player, eJoint, joint);
         
         if (joint.fConfidence < 0.5){
-            x_file << "[,]" << (addComma? ", " : "");
+            if (p_x_file) {
+                ofstream &x_file = *p_x_file;
+                x_file << "[,]" << (addComma? ", " : "");
+            }
             return;
         }
         else {
@@ -153,14 +158,23 @@ void OpenGLHelper::DrawPoint(xn::UserGenerator& userGenerator,
             XnPoint3D pt[2];
             pt[0] = joint.position;
             depthGenerator.ConvertRealWorldToProjective(1, pt, pt);
-            glVertex2f(pt[0].X, pt[0].Y);
-            sprintf(strLabel, "%s (%.0f, %.0f) ", GetJointName(eJoint), pt[0].X,pt[0].Y);
-            glColor3f(1.f,1.f,1.f);
-            glRasterPos2i(pt[0].X, pt[0].Y);
-            glPrintString(GLUT_BITMAP_HELVETICA_18, strLabel);
-            
-            x_file << "[" << pt[0].X << ", " << pt[0].Y << "]";
-            if (addComma) x_file << ", ";
+            if (!p_x_file)
+            {
+                glVertex2f(pt[0].X, pt[0].Y);
+                if (drawPointOptions & DRAW_NAME)
+                    sprintf(strLabel, "%s ", GetJointName(eJoint));
+                else if (drawPointOptions & DRAW_POSITION)
+                    sprintf(strLabel, "(%.0f, %.0f) ", pt[0].X,pt[0].Y);
+                glColor3f(1.f,1.f,1.f);
+                glRasterPos2i(pt[0].X, pt[0].Y);
+                glPrintString(GLUT_BITMAP_HELVETICA_18, strLabel);
+            }
+            if (p_x_file) {
+                ofstream &x_file = *p_x_file;
+
+                x_file << "[" << pt[0].X << ", " << pt[0].Y << "]";
+                if (addComma) x_file << ", ";
+            }
         }
         
     }
@@ -199,7 +213,7 @@ void OpenGLHelper::Distance3D(xn::UserGenerator& userGenerator,
     sprintf(strLabel, " Distance between %s, and %s, :(%.03fm) ", GetJointName(eJoint1), GetJointName(eJoint2), dist);
     glColor3f(1.f,1.f,1.f);
     glRasterPos2i(20, (eJoint2 == XN_SKEL_RIGHT_HAND)? 80 : 110);
-    glPrintString(GLUT_BITMAP_HELVETICA_18, strLabel);
+    glPrintString(GLUT_BITMAP_HELVETICA_18, strLabel, 0.75f);
     
 }
 
@@ -240,13 +254,12 @@ void OpenGLHelper::DrawCircle(xn::UserGenerator& userGenerator,
     glEnd();
 }
 
-void OpenGLHelper::drawSkeletoninDepthView()
+void OpenGLHelper::drawSkeletonCommon()
 {
     char strLabel[100];
     XnUserID aUsers[3];
     XnUInt16 nUsers = 3;
-    GLfloat width = 3;
-    
+
     auto &depthGenerator = sensor::depthGenerator();
     auto &userGenerator = sensor::userGenerator();
     
@@ -284,13 +297,14 @@ void OpenGLHelper::drawSkeletoninDepthView()
             float dist = com.Z /1000.0f;
             sprintf(strLabel, "Distance :(%.1fm) ", dist);
             glColor3f(1.f,1.f,1.f);
-            glRasterPos2i(20, 60);
-            glPrintString(GLUT_BITMAP_HELVETICA_18, strLabel);
+            glRasterPos2i(5, 10);
+            glPrintString(GLUT_BITMAP_HELVETICA_18, strLabel, 0.75f);
             
-            sprintf(strLabel, "Hand speeds (L/R) :(%.1f/%.1f) ", g_LeftHandPositionHistory.Speed(), g_RightHandPositionHistory.Speed());
+            /*sprintf(strLabel, "Hand speeds (L/R) :(%.1f/%.1f) ", g_LeftHandPositionHistory.Speed(), g_RightHandPositionHistory.Speed());
             glColor3f(1.f,1.f,1.f);
             glRasterPos2i(20, 130);
-            glPrintString(GLUT_BITMAP_HELVETICA_18, strLabel);
+            glPrintString(GLUT_BITMAP_HELVETICA_18, strLabel, 0.75f);
+            */
             
             xnOSMemSet(strLabel, 0, sizeof(strLabel));
             if (!g_bPrintState)
@@ -321,10 +335,50 @@ void OpenGLHelper::drawSkeletoninDepthView()
             
             glRasterPos2i(com.X, com.Y);
             glPrintString(GLUT_BITMAP_HELVETICA_18, strLabel);
+            
+            if (g_bDrawSkeleton && userGenerator.GetSkeletonCap().IsTracking(aUsers[i]))
+            {
+                DrawPoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_HEAD, 0, &csv_file);
+                
+                DrawPoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_NECK, 0, &csv_file);
+                DrawPoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_LEFT_SHOULDER, 0, &csv_file);
+                DrawPoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_LEFT_ELBOW, 0, &csv_file);
+                DrawPoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_NECK, 0, &csv_file);
+                
+                DrawPoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_RIGHT_SHOULDER, 0, &csv_file);
+                DrawPoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_RIGHT_ELBOW, 0, &csv_file);
+                
+                DrawPoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_TORSO, 0, &csv_file);
+                DrawPoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_LEFT_HIP, 0, &csv_file);
+                DrawPoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_LEFT_KNEE, 0, &csv_file);
+                DrawPoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_RIGHT_HIP, 0, &csv_file);
+                DrawPoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_LEFT_FOOT, 0, &csv_file);
+                
+                DrawPoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_RIGHT_KNEE, 0, &csv_file);
+                DrawPoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_LEFT_HIP, 0, &csv_file);
+                DrawPoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_RIGHT_FOOT, 0, &csv_file);
+                DrawPoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_RIGHT_HAND, 0, &csv_file);
+                DrawPoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_LEFT_HAND, 0, &csv_file, false);
+
+            }
         }
         
-        //cmdVelPub.publish(vel);
-        
+        csv_file.close();
+    }
+}
+
+void OpenGLHelper::drawSkeletonInDepthView()
+{
+    XnUserID aUsers[3];
+    XnUInt16 nUsers = 3;
+    GLfloat width = 3;
+    
+    auto &depthGenerator = sensor::depthGenerator();
+    auto &userGenerator = sensor::userGenerator();
+    
+    userGenerator.GetUsers(aUsers, nUsers);
+    for (int i = 0; i < nUsers; ++i)
+    {
         if (g_bDrawSkeleton && userGenerator.GetSkeletonCap().IsTracking(aUsers[i]))
         {
             glLineWidth(width);
@@ -355,9 +409,9 @@ void OpenGLHelper::drawSkeletoninDepthView()
             glEnd();
             
             
+            glPointSize(10.0);
             glBegin(GL_POINTS);
             glColor3f(1.f, 0.f, 0.f);
-            glPointSize(1000.0);
             
             DrawJoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_HEAD);
             
@@ -383,41 +437,110 @@ void OpenGLHelper::drawSkeletoninDepthView()
             
             glEnd();
             
-            DrawPoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_HEAD, csv_file);
+            DrawPoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_HEAD, DRAW_POSITION);
             
-            DrawPoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_NECK, csv_file);
-            DrawPoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_LEFT_SHOULDER, csv_file);
-            DrawPoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_LEFT_ELBOW, csv_file);
-            DrawPoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_NECK, csv_file);
+            DrawPoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_NECK, DRAW_POSITION);
+            DrawPoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_LEFT_SHOULDER, DRAW_POSITION);
+            DrawPoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_LEFT_ELBOW, DRAW_POSITION);
+            DrawPoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_NECK, DRAW_POSITION);
             
-            DrawPoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_RIGHT_SHOULDER, csv_file);
-            DrawPoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_RIGHT_ELBOW, csv_file);
+            DrawPoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_RIGHT_SHOULDER, DRAW_POSITION);
+            DrawPoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_RIGHT_ELBOW, DRAW_POSITION);
             
-            DrawPoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_TORSO, csv_file);
-            DrawPoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_LEFT_HIP, csv_file);
-            DrawPoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_LEFT_KNEE, csv_file);
-            DrawPoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_RIGHT_HIP, csv_file);
-            DrawPoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_LEFT_FOOT, csv_file);
+            DrawPoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_TORSO, DRAW_POSITION);
+            DrawPoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_LEFT_HIP, DRAW_POSITION);
+            DrawPoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_LEFT_KNEE, DRAW_POSITION);
+            DrawPoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_RIGHT_HIP, DRAW_POSITION);
+            DrawPoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_LEFT_FOOT, DRAW_POSITION);
             
-            DrawPoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_RIGHT_KNEE, csv_file);
-            DrawPoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_LEFT_HIP, csv_file);
-            DrawPoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_RIGHT_FOOT, csv_file);
-            DrawPoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_RIGHT_HAND, csv_file);
-            DrawPoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_LEFT_HAND, csv_file, false);
+            DrawPoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_RIGHT_KNEE, DRAW_POSITION);
+            DrawPoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_LEFT_HIP, DRAW_POSITION);
+            DrawPoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_RIGHT_FOOT, DRAW_POSITION);
+            DrawPoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_RIGHT_HAND, DRAW_POSITION);
+            DrawPoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_LEFT_HAND, DRAW_POSITION);
             
-            Distance3D(userGenerator, depthGenerator, aUsers[i], XN_SKEL_HEAD, XN_SKEL_RIGHT_HAND);
-            Distance3D(userGenerator, depthGenerator, aUsers[i], XN_SKEL_HEAD, XN_SKEL_LEFT_HAND);
+            //Distance3D(userGenerator, depthGenerator, aUsers[i], XN_SKEL_HEAD, XN_SKEL_RIGHT_HAND);
+            //Distance3D(userGenerator, depthGenerator, aUsers[i], XN_SKEL_HEAD, XN_SKEL_LEFT_HAND);
             
             DrawCircle(userGenerator, depthGenerator, aUsers[i], XN_SKEL_RIGHT_HAND, 10, g_RightHandPositionHistory.Color());
             DrawCircle(userGenerator, depthGenerator, aUsers[i], XN_SKEL_LEFT_HAND, 10, g_LeftHandPositionHistory.Color());
         }
         
-        csv_file.close();
     }
 }
 
-void OpenGLHelper::drawSkeletoninRGBView()
+void OpenGLHelper::drawSkeletonInRGBView()
 {
     glColor3f(1.f,1.f,1.f);
+
+    XnUserID aUsers[3];
+    XnUInt16 nUsers = 3;
+    
+    auto &depthGenerator = sensor::depthGenerator();
+    auto &userGenerator = sensor::userGenerator();
+    
+    userGenerator.GetUsers(aUsers, nUsers);
+    for (int i = 0; i < nUsers; ++i)
+    {
+        if (g_bDrawSkeleton && userGenerator.GetSkeletonCap().IsTracking(aUsers[i]))
+        {
+            glPointSize(10.0);
+            glBegin(GL_POINTS);
+            glColor3f(1.f, 0.f, 0.f);
+            
+            DrawJoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_HEAD);
+            
+            DrawJoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_NECK);
+            DrawJoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_LEFT_SHOULDER);
+            DrawJoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_LEFT_ELBOW);
+            DrawJoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_NECK);
+            
+            DrawJoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_RIGHT_SHOULDER);
+            DrawJoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_RIGHT_ELBOW);
+            
+            DrawJoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_TORSO);
+            DrawJoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_LEFT_HIP);
+            DrawJoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_LEFT_KNEE);
+            DrawJoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_RIGHT_HIP);
+            DrawJoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_LEFT_FOOT);
+            
+            DrawJoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_RIGHT_KNEE);
+            DrawJoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_LEFT_HIP);
+            DrawJoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_RIGHT_FOOT);
+            DrawJoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_RIGHT_HAND);
+            DrawJoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_LEFT_HAND);
+            
+            glEnd();
+            
+            DrawPoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_HEAD, DRAW_NAME);
+            
+            DrawPoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_NECK, DRAW_NAME);
+            DrawPoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_LEFT_SHOULDER, DRAW_NAME);
+            DrawPoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_LEFT_ELBOW, DRAW_NAME);
+            DrawPoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_NECK, DRAW_NAME);
+            
+            DrawPoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_RIGHT_SHOULDER, DRAW_NAME);
+            DrawPoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_RIGHT_ELBOW, DRAW_NAME);
+            
+            DrawPoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_TORSO, DRAW_NAME);
+            DrawPoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_LEFT_HIP, DRAW_NAME);
+            DrawPoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_LEFT_KNEE, DRAW_NAME);
+            DrawPoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_RIGHT_HIP, DRAW_NAME);
+            DrawPoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_LEFT_FOOT, DRAW_NAME);
+            
+            DrawPoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_RIGHT_KNEE, DRAW_NAME);
+            DrawPoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_LEFT_HIP, DRAW_NAME);
+            DrawPoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_RIGHT_FOOT, DRAW_NAME);
+            DrawPoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_RIGHT_HAND, DRAW_NAME);
+            DrawPoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_LEFT_HAND, DRAW_NAME);
+            
+            //Distance3D(userGenerator, depthGenerator, aUsers[i], XN_SKEL_HEAD, XN_SKEL_RIGHT_HAND);
+            //Distance3D(userGenerator, depthGenerator, aUsers[i], XN_SKEL_HEAD, XN_SKEL_LEFT_HAND);
+            
+            DrawCircle(userGenerator, depthGenerator, aUsers[i], XN_SKEL_RIGHT_HAND, 10, g_RightHandPositionHistory.Color());
+            DrawCircle(userGenerator, depthGenerator, aUsers[i], XN_SKEL_LEFT_HAND, 10, g_LeftHandPositionHistory.Color());
+        }
+        
+    }
 }
 

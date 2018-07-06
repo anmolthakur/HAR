@@ -32,14 +32,15 @@ public:
     void init();
     void beginFrame();
 
-    void glPrintString(void *font, char *str);
+    void glPrintString(void *font, char *str, float scale=1.0f);
     void drawSkeleton(bool isDepthView);
 
     void endFrame();
     
 private:
-    void drawSkeletoninRGBView();
-    void drawSkeletoninDepthView();
+    void drawSkeletonCommon();
+    void drawSkeletonInRGBView();
+    void drawSkeletonInDepthView();
     
     void DrawLimb(xn::UserGenerator& userGenerator,
                   xn::DepthGenerator& depthGenerator,
@@ -51,10 +52,14 @@ private:
     
     const char *GetJointName (XnSkeletonJoint eJoint);
     
+    enum DrawPointOptions {
+        DRAW_NAME = 0x2,
+        DRAW_POSITION = 0x4
+    };
     void DrawPoint(xn::UserGenerator& userGenerator,
                    xn::DepthGenerator& depthGenerator,
-                   XnUserID player, XnSkeletonJoint eJoint,
-                   ofstream &x_file, bool addComma=true);
+                   XnUserID player, XnSkeletonJoint eJoint, uint drawPointOptions,
+                   ofstream *x_file=nullptr, bool addComma=true);
     
     void Distance3D(xn::UserGenerator& userGenerator,
                     xn::DepthGenerator& depthGenerator,

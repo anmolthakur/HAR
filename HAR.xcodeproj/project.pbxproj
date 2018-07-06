@@ -46,6 +46,7 @@
 		0DCEEFE01FFBDF7800BC12ED /* imgui_tabs.h in Headers */ = {isa = PBXBuildFile; fileRef = 0DCEEFDD1FFBDF6900BC12ED /* imgui_tabs.h */; };
 		0DF8F329209DD42100DE7FF8 /* helvetica-32.png in CopyFiles */ = {isa = PBXBuildFile; fileRef = 0DF8F328209DD40300DE7FF8 /* helvetica-32.png */; };
 		0DFAAD411FFEB4BA008CDDCF /* graph_generators.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0DFAAD3F1FFEB4BA008CDDCF /* graph_generators.cpp */; };
+		B2AF84ED20F0043500E2501A /* helvetica-12.png in CopyFiles */ = {isa = PBXBuildFile; fileRef = B2AF84EC20F0042000E2501A /* helvetica-12.png */; };
 		B2CB78B9209B35570084F524 /* libglfw.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = B2CB78B8209B35570084F524 /* libglfw.dylib */; };
 		B2CB78BB209B35620084F524 /* libGLEW.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = B2CB78BA209B35620084F524 /* libGLEW.dylib */; };
 /* End PBXBuildFile section */
@@ -69,6 +70,7 @@
 			files = (
 				0DCEEFDA1FFBD40700BC12ED /* checker-rgb.jpg in CopyFiles */,
 				0DCEEFDB1FFBD40700BC12ED /* checker.png in CopyFiles */,
+				B2AF84ED20F0043500E2501A /* helvetica-12.png in CopyFiles */,
 				0D1DF05820225CA80079A813 /* OpenNIConfig.xml in CopyFiles */,
 				0DF8F329209DD42100DE7FF8 /* helvetica-32.png in CopyFiles */,
 				0D71A6A720AE318A0052E1BE /* font.shader in CopyFiles */,
@@ -126,6 +128,7 @@
 		0DF8F328209DD40300DE7FF8 /* helvetica-32.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "helvetica-32.png"; sourceTree = "<group>"; };
 		0DFAAD3F1FFEB4BA008CDDCF /* graph_generators.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = graph_generators.cpp; sourceTree = "<group>"; };
 		0DFAAD401FFEB4BA008CDDCF /* graph_generators.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = graph_generators.hpp; sourceTree = "<group>"; };
+		B2AF84EC20F0042000E2501A /* helvetica-12.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "helvetica-12.png"; sourceTree = "<group>"; };
 		B2CB78B8209B35570084F524 /* libglfw.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libglfw.dylib; path = ../../../../../usr/local/lib/libglfw.dylib; sourceTree = "<group>"; };
 		B2CB78BA209B35620084F524 /* libGLEW.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libGLEW.dylib; path = ../../../../../usr/local/lib/libGLEW.dylib; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -260,6 +263,7 @@
 		0D1A083D1FC9EB5700C8637B /* data */ = {
 			isa = PBXGroup;
 			children = (
+				B2AF84EC20F0042000E2501A /* helvetica-12.png */,
 				0D1DF05720225CA30079A813 /* OpenNIConfig.xml */,
 				0DF8F328209DD40300DE7FF8 /* helvetica-32.png */,
 				0DCEEFD91FFBD3ED00BC12ED /* checker-rgb.jpg */,
@@ -448,6 +452,7 @@
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
 					"$(inherited)",
+					"USE_FONT_SIZE_12=1",
 				);
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
@@ -510,6 +515,7 @@
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_PREPROCESSOR_DEFINITIONS = "USE_FONT_SIZE_12=1";
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
 				GCC_WARN_UNDECLARED_SELECTOR = YES;
@@ -538,7 +544,11 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = FB4AWHH32G;
+				DEVELOPMENT_TEAM = 7P7W7LHWJD;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					/usr/local/Cellar/glew/2.1.0/lib,
@@ -554,7 +564,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = FB4AWHH32G;
+				DEVELOPMENT_TEAM = 7P7W7LHWJD;
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					/usr/local/Cellar/glew/2.1.0/lib,

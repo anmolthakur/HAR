@@ -411,7 +411,7 @@ namespace gfx
     
 // Functions
 //
-    void drawString(int x, int y, const char *str);
+    void drawString(int x, int y, const char *str, float scale=1.0f);
 }
 
 #pragma GCC visibility pop
