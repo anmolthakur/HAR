@@ -71,6 +71,10 @@ private:
                     float radius, XnFloat *color3f);
     
     void DrawBezierCurve(const std::vector<XnPoint3D> &controlPoints, int numPoints = 16);
+    
+    void handtrajectory(xn::UserGenerator& userGenerator,
+                        xn::DepthGenerator& depthGenerator,
+                        XnUserID player, XnSkeletonJoint eJoint, bool updateHistory);
 };
 
 

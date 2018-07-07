@@ -1,5 +1,8 @@
 #include "utils.hpp"
 
+std::string OutputData::PostFix;
+std::string OutputData::CsvExtension;
+
 
 unsigned int getClosestPowerOfTwo(unsigned int n)
 {

@@ -1,6 +1,10 @@
 #include "subsys.hpp"
 #include "har.hpp"
 
+extern History g_RightHandPositionHistory;
+extern History g_LeftHandPositionHistory;
+
+
 // OpenGLHelper Implementation
 //
 void OpenGLHelper::init()
@@ -254,6 +258,86 @@ void OpenGLHelper::DrawCircle(xn::UserGenerator& userGenerator,
     glEnd();
 }
 
+//Function Struct History is called from trajectory.h (file)
+bool GetHistoryForJoint (XnSkeletonJoint eJoint, History **history) {
+    switch (eJoint)
+    {
+        case XN_SKEL_RIGHT_HAND:
+            *history = &g_RightHandPositionHistory;
+            break;
+            
+        case XN_SKEL_LEFT_HAND:
+            *history = &g_LeftHandPositionHistory;
+            break;
+            
+        default:
+            *history = 0;
+            return false;
+    };
+    
+    return true;
+}
+
+//Draw hand trajectory at each frame
+void OpenGLHelper::handtrajectory(xn::UserGenerator& userGenerator,
+                    xn::DepthGenerator& depthGenerator,
+                    XnUserID player, XnSkeletonJoint eJoint, bool updateHistory)
+{
+    XnSkeletonJointPosition joint;
+    userGenerator.GetSkeletonCap().GetSkeletonJointPosition(player, eJoint, joint);
+    
+    if (joint.fConfidence < 0.5){
+        return;
+    }
+    
+    XnPoint3D pt_world, pt_screen;
+    
+    OutputData::ScopedFileStreamForAppend fs(std::string("Trajectory_") + (eJoint == XN_SKEL_LEFT_HAND? "LeftHand" : "RightHand"));
+    ofstream &x_file = fs.GetStream();
+    
+    pt_world = joint.position;
+    float x = ((pt_world.X*25.4)/72)/1000;
+    float y = ((pt_world.Y*25.4)/72)/1000;
+    float z = pt_world.Z/1000;
+    x_file << x;
+    x_file << ",";
+    x_file << y;
+    x_file << ",";
+    x_file << z;
+    x_file << "\r\n";
+    depthGenerator.ConvertRealWorldToProjective(1, &pt_world, &pt_screen);
+    
+    History *history;
+    if (GetHistoryForJoint (eJoint, &history) == false) return;
+    
+    if (updateHistory) history->StoreValue (pt_world, pt_screen); // store value in the history
+    
+    // Visualize history
+    //
+    XnFloat pVertexBuffer [HISTORY_DRAW_SIZE * sizeof (float) * 3];
+    XnFloat *pVertex = pVertexBuffer;
+    
+    // Prepare vertex buffer for drawing
+    XnPoint3D pt;
+    for (int k = 0; k < history->Size(); ++k) {
+        history->GetValueScreen (k, pt);
+        
+        *pVertex++ = pt.X;
+        *pVertex++ = pt.Y;
+        *pVertex++ = 0.0f;
+    }
+    
+    glColor3f(0.f, 1.f, 0.f);
+    glVertexPointer(3, GL_FLOAT, 0, pVertexBuffer);
+    
+    // draw trajectory
+    glLineWidth(2);
+    glDrawArrays(GL_LINE_STRIP, 0, history->Size());
+    
+    glPointSize(8);
+    glDrawArrays(GL_POINTS, 0, history->Size());
+}
+
 void OpenGLHelper::drawSkeletonCommon()
 {
     char strLabel[100];
@@ -280,7 +364,7 @@ void OpenGLHelper::drawSkeletonCommon()
         }
         
         char filename[256];
-        sprintf (filename, "JointPositionData:%02d.csv", i);
+        sprintf (filename, "JointPositionData/%02d.csv", i);
         ofstream csv_file;
         csv_file.open (filename, ios::app);
         
@@ -473,6 +557,9 @@ void OpenGLHelper::drawSkeletonInRGBView()
 {
     glColor3f(1.f,1.f,1.f);
 
+    bool EnableLeftHand = true;
+    bool EnableRightHand = true;
+    
     XnUserID aUsers[3];
     XnUInt16 nUsers = 3;
     
@@ -533,6 +620,9 @@ void OpenGLHelper::drawSkeletonInRGBView()
             DrawPoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_RIGHT_FOOT, DRAW_NAME);
             DrawPoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_RIGHT_HAND, DRAW_NAME);
             DrawPoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_LEFT_HAND, DRAW_NAME);
+            
+            if (EnableRightHand) handtrajectory(userGenerator, depthGenerator, aUsers[i], XN_SKEL_RIGHT_HAND, true);
+            if (EnableLeftHand) handtrajectory(userGenerator, depthGenerator, aUsers[i], XN_SKEL_LEFT_HAND, true);
             
             //Distance3D(userGenerator, depthGenerator, aUsers[i], XN_SKEL_HEAD, XN_SKEL_RIGHT_HAND);
             //Distance3D(userGenerator, depthGenerator, aUsers[i], XN_SKEL_HEAD, XN_SKEL_LEFT_HAND);
