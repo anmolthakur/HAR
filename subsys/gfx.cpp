@@ -452,6 +452,9 @@ namespace gfx
         xn::ImageMetaData imd;
         sensor::imageGenerator().GetMetaData(imd);
         
+        //Captures a Single Frame
+        xnOSSaveFile("test1.raw", imd.Data(), imd.DataSize());
+        
         if (!bInit)
         {
             bInit = true;
