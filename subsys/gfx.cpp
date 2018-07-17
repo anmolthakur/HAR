@@ -487,6 +487,9 @@ namespace gfx
             {
                 const XnRGB24Pixel* pImage = pImageRow;
                 XnRGB24Pixel* pTex = pTexRow + imd.XOffset();
+                //Did here, but no sucess
+                cv::Mat image(cv::Size(640, 480), CV_8UC3, pImage);
+                cv::imwrite("outputImage.png", image);
                 
                 for (XnUInt x = 0; x < imd.XRes(); ++x, ++pImage, ++pTex)
                 {
