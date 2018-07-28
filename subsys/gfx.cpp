@@ -445,6 +445,22 @@ namespace gfx
     
 // RGBFeed
 //
+    RGBFeed::RGBFeed()
+    : pngWriteThread(&RGBFeed::writePNG, this)
+    {
+        freeBuffers_.reserve(BufferCount_);
+        for (int k = 0; k < BufferCount_; ++k)
+        {
+            freeBuffers_.push_back(k);
+        }
+    }
+    
+    RGBFeed::~RGBFeed()
+    {
+        bThreadRunning_ = false;
+        pngWriteThread.join();
+    }
+    
     void RGBFeed::update()
     {
         if (!sensor::initialized()) return;
@@ -452,16 +468,16 @@ namespace gfx
         xn::ImageMetaData imd;
         sensor::imageGenerator().GetMetaData(imd);
         
-        //Captures a Single Frame
-        xnOSSaveFile("test1.raw", imd.Data(), imd.DataSize());
-        
         if (!bInit)
         {
             bInit = true;
             
             texWidth = getClosestPowerOfTwo(imd.XRes());
             texHeight = getClosestPowerOfTwo(imd.YRes());
-            imageTexBuf_.resize(texWidth * texHeight * 4);
+            for (int k = 0; k < BufferCount_; ++k)
+            {
+                imageTexBuf_[k].resize(texWidth * texHeight * 4);
+            }
             
             tex_ = gfx::Texture(texWidth, texHeight, Texture::Format::Rgb8);
             
@@ -476,32 +492,170 @@ namespace gfx
             uv2 = ImVec2(texXpos, texYpos);
             //memset(texcoords, 0, 8 * sizeof(float));
             //texcoords[0] = texXpos; texcoords[1] = texYpos; texcoords[2] = texXpos; texcoords[7] = texYpos;
+
+            initPNG(imd);
         }
-        
-        // Update texture data
+
+        // Process this frame
         {
-            const XnRGB24Pixel* pImageRow = imd.RGB24Data();
-            XnRGB24Pixel* pTexRow = (XnRGB24Pixel*)(imageTexBuf_.data() + imd.YOffset() * texWidth);
-            
-            for (XnUInt y = 0; y < imd.YRes(); ++y)
+            std::lock_guard<std::mutex> freeBuffersGuard(freeBuffersMutex_);
+            if (freeBuffers_.size() > 0)
             {
-                const XnRGB24Pixel* pImage = pImageRow;
-                XnRGB24Pixel* pTex = pTexRow + imd.XOffset();
-                //Did here, but no sucess
-                cv::Mat image(cv::Size(640, 480), CV_8UC3, pImage);
-                cv::imwrite("outputImage.png", image);
+                // get a free buffer
+                //
+                int currentBuffer = freeBuffers_.back();
+                freeBuffers_.pop_back();
                 
-                for (XnUInt x = 0; x < imd.XRes(); ++x, ++pImage, ++pTex)
+                // Update texture data
+                //
                 {
-                    *pTex = *pImage;
+                    const XnRGB24Pixel* pImageRow = imd.RGB24Data();
+                    XnRGB24Pixel* pTexRow = (XnRGB24Pixel*)(imageTexBuf_[currentBuffer].data() + imd.YOffset() * texWidth);
+                    
+                    for (XnUInt y = 0; y < imd.YRes(); ++y)
+                    {
+                        const XnRGB24Pixel* pImage = pImageRow;
+                        XnRGB24Pixel* pTex = pTexRow + imd.XOffset();
+                        
+                        for (XnUInt x = 0; x < imd.XRes(); ++x, ++pImage, ++pTex)
+                        {
+                            *pTex = *pImage;
+                        }
+                        
+                        pImageRow += imd.XRes();
+                        pTexRow += texWidth;
+                    }
+
+                    tex_.updateTexelData((void *)imageTexBuf_[currentBuffer].data());
                 }
                 
-                pImageRow += imd.XRes();
+                // send this buffer to Write thread for writing to disk
+                //
+                std::lock_guard<std::mutex> buffersToWriteGuard(buffersToWriteMutex_);
+                buffersToWrite_.push_back(currentBuffer);
+            }
+            else
+            {
+                //std::cout << "RGB frame skipped!\n";
+            }
+        }
+    }
+    
+    void RGBFeed::initPNG(xn::ImageMetaData &imd)
+    {
+        imgW_ = imd.XRes();
+        imgH_ = imd.YRes();
+        
+        for (int b = 0; b < BufferCount_; ++b)
+        {
+            rowPointers_[b].resize(imgH_);
+            
+            XnRGB24Pixel* pTexRow = (XnRGB24Pixel*)(imageTexBuf_[b].data() + imd.YOffset() * texWidth);
+            for (auto k = 0; k < imgH_; ++k)
+            {
+                rowPointers_[b][k] = reinterpret_cast<png_bytep>(pTexRow);
                 pTexRow += texWidth;
             }
         }
-        tex_.updateTexelData((void *)imageTexBuf_.data());
+        
+        currentFrame_ = 0;
+
+        outdir_ = "./rgbfeed";
+        if (!boost::filesystem::create_directory(outdir_)) {
+            return;
+        }
+        /*{
+             // Use rgbfeed/ as output directory
+             //  If rgbfeed/ already exists then use rgbfeed1/ as output directory
+             //  If rgbfeed1/ already exists then use rgbfeed2/ as output directory
+             //
+             //  If all 3 directories exists then overwrite rgbfeed/
+         
+             if (boost::filesystem::exists(outdir_))
+             {
+                 for (int k = 1; k < 3; ++k)
+                 {
+                     std::string newOutDir(outdir_);
+                     newOutDir += std::to_string(k);
+         
+                     if (boost::filesystem::exists(newOutDir)) continue;
+         
+                     if (boost::filesystem::create_directory(newOutDir))
+                     {
+                        outdir_ = newOutDir;
+                     }
+                 }
+             }
+             else
+             {
+                if (!boost::filesystem::create_directory(outdir_)) return;
+             }
+         }*/
     }
+    
+    void RGBFeed::writePNG()
+    {
+        static bool bWriteToFile = true;
+        
+        // Enter write thread loop
+        while(bThreadRunning_)
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            
+            int currentBuffer = -1;
+            {
+                std::lock_guard<std::mutex> buffersToWriteGuard(buffersToWriteMutex_);
+                if (buffersToWrite_.size() == 0) continue;
+                
+                currentBuffer = buffersToWrite_.front();
+                buffersToWrite_.pop_front();
+                
+                if (bWriteToFile)
+                {
+                    png_ = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+                    if (!png_) abort();
+                    
+                    pngInfo_ = png_create_info_struct(png_);
+                    if (!pngInfo_) abort();
+                    
+                    if (setjmp(png_jmpbuf(png_))) abort();
+
+                    std::string filename = outdir_ + "/frame" + std::to_string(currentFrame_++) + ".png";
+                    
+                    FILE *fp = fopen(filename.c_str(), "wb");
+                    if(fp)
+                    {
+                        png_init_io(png_, fp);
+                        
+                        // Output is 8bit depth, RGB format.
+                        png_set_IHDR(
+                                     png_,
+                                     pngInfo_,
+                                     imgW_, imgH_,
+                                     8,
+                                     PNG_COLOR_TYPE_RGB,
+                                     PNG_INTERLACE_NONE,
+                                     PNG_COMPRESSION_TYPE_DEFAULT,
+                                     PNG_FILTER_TYPE_DEFAULT
+                                     );
+                        png_write_info(png_, pngInfo_);
+                    
+                        png_write_image(png_, rowPointers_[currentBuffer].data());
+                    }
+                    
+                    png_write_end(png_, NULL);
+                    fclose(fp);
+                }
+            }
+            
+            if (currentBuffer != -1)
+            {
+                std::lock_guard<std::mutex> freeBuffersGuard(freeBuffersMutex_);
+                freeBuffers_.push_back(currentBuffer);
+            }
+        }
+    }
+
     
     
 // RenderToTexture

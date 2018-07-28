@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0D04177B210C788E0097616D /* libboost_filesystem.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 0D04177A210C788E0097616D /* libboost_filesystem.a */; };
+		0D04177D210C7F980097616D /* libboost_system.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 0D04177C210C7F970097616D /* libboost_system.a */; };
+		0D04177F210C7FAF0097616D /* libpng.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 0D04177E210C7FAF0097616D /* libpng.a */; };
 		0D159188209DB6CE002C4B0B /* imgui_impl_glfw_gl2.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0D159186209DB6CE002C4B0B /* imgui_impl_glfw_gl2.cpp */; };
 		0D159189209DB6CE002C4B0B /* imgui_impl_glfw_gl2.h in Headers */ = {isa = PBXBuildFile; fileRef = 0D159187209DB6CE002C4B0B /* imgui_impl_glfw_gl2.h */; };
 		0D1A07F21FC9025200C8637B /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0D1A07F11FC9025200C8637B /* main.cpp */; };
@@ -80,6 +83,9 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		0D04177A210C788E0097616D /* libboost_filesystem.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libboost_filesystem.a; path = ../../../../../../../usr/local/lib/libboost_filesystem.a; sourceTree = "<group>"; };
+		0D04177C210C7F970097616D /* libboost_system.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libboost_system.a; path = ../../../../../../../usr/local/lib/libboost_system.a; sourceTree = "<group>"; };
+		0D04177E210C7FAF0097616D /* libpng.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libpng.a; path = ../../../../../../../usr/local/lib/libpng.a; sourceTree = "<group>"; };
 		0D159186209DB6CE002C4B0B /* imgui_impl_glfw_gl2.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = imgui_impl_glfw_gl2.cpp; sourceTree = "<group>"; };
 		0D159187209DB6CE002C4B0B /* imgui_impl_glfw_gl2.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = imgui_impl_glfw_gl2.h; sourceTree = "<group>"; };
 		0D1A07EE1FC9025200C8637B /* HAR */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = HAR; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -147,6 +153,9 @@
 				0D1A08261FC904E800C8637B /* libsubsys.a in Frameworks */,
 				B2CB78B9209B35570084F524 /* libglfw.dylib in Frameworks */,
 				B2CB78BB209B35620084F524 /* libGLEW.dylib in Frameworks */,
+				0D04177B210C788E0097616D /* libboost_filesystem.a in Frameworks */,
+				0D04177D210C7F980097616D /* libboost_system.a in Frameworks */,
+				0D04177F210C7FAF0097616D /* libpng.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -246,6 +255,9 @@
 		0D1A08251FC904E800C8637B /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				0D04177E210C7FAF0097616D /* libpng.a */,
+				0D04177C210C7F970097616D /* libboost_system.a */,
+				0D04177A210C788E0097616D /* libboost_filesystem.a */,
 				B2CB78BA209B35620084F524 /* libGLEW.dylib */,
 				B2CB78B8209B35570084F524 /* libglfw.dylib */,
 				0D6C25C52030DF1300AD5607 /* libopencv_core.dylib */,
@@ -544,7 +556,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = 7P7W7LHWJD;
+				DEVELOPMENT_TEAM = FB4AWHH32G;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
 					"$(inherited)",
@@ -564,7 +576,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = 7P7W7LHWJD;
+				DEVELOPMENT_TEAM = FB4AWHH32G;
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					/usr/local/Cellar/glew/2.1.0/lib,

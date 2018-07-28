@@ -11,6 +11,10 @@
 #include <map>
 #include <type_traits>
 #include <cassert>
+#include <boost/filesystem.hpp>
+#include <thread>
+#include <list>
+#include <chrono>
 
 
 /* OpenNI */
@@ -37,6 +41,7 @@
 #include "utils.hpp"
 #include "imgui_internal.h"
 //#include "imgui_tabs.h"
+#include <png.h>
 
 
 //namespace
@@ -374,15 +379,37 @@ namespace gfx
     class RGBFeed : public DynamicTextureGenerator
     {
     public:
+        RGBFeed();
+        ~RGBFeed();
+        
         void update() override;
         int logicalWidth() override { return (int)topLeftX; }
         int logicalHeight() override { return (int)bottomRightY; }
         
     private:
+        void initPNG(xn::ImageMetaData &imd);
+        void writePNG();
+        
+    private:
+        static const int BufferCount_ = 4;
+        std::vector<int> freeBuffers_;
+        std::list<int> buffersToWrite_;
+        
+        std::mutex freeBuffersMutex_, buffersToWriteMutex_;
+        std::thread pngWriteThread;
+        int currentFrame_ = 0;
+        bool bThreadRunning_ = true;
+
         float topLeftX, topLeftY, bottomRightY, bottomRightX, texXpos, texYpos;
-        std::vector<unsigned char> imageTexBuf_;
+        std::vector<unsigned char> imageTexBuf_[BufferCount_];
         bool bInit = false;
         unsigned int texWidth, texHeight;
+
+        std::vector<png_bytep> rowPointers_[BufferCount_];
+        png_structp png_ = nullptr;
+        png_infop pngInfo_;
+        int imgW_, imgH_;
+        std::string outdir_;
     };
     
     
