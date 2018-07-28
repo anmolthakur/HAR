@@ -86,10 +86,10 @@ void Application::drawFunction(window::Layer layer)
             glMatrixMode(GL_PROJECTION);
             glLoadIdentity();
             
+            rgbFeed.update(); // always update RGB even when in Depth View mode. Because we are writing RGB to the disk.
+
             if (gui.getCurrentMainPanelTab() == GUIHelper::MainPanelTab::RGB)
             {
-                rgbFeed.update();
-                
                 glOrtho(0, rgbFeed.logicalWidth(), 0, rgbFeed.logicalHeight(), -1.0, 1.0);
                 
                 if (rtt.begin(&rgbFeed))
