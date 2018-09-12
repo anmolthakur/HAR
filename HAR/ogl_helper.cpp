@@ -24,7 +24,7 @@ void OpenGLHelper::endFrame()
 {
 }
 
-void OpenGLHelper::glPrintString(void *font, char *str, float scale)
+void OpenGLHelper::glPrintString(void *font, const char *str, float scale)
 {
     GLint pos[4];
     glGetIntegerv(GL_CURRENT_RASTER_POSITION, pos);
@@ -363,10 +363,8 @@ void OpenGLHelper::drawSkeletonCommon()
             g_RightHandPositionHistory.SetTarget(pt_world, pt_screen);
         }
         
-        char filename[256];
-        sprintf (filename, "JointPositionData/%02d.csv", i);
-        ofstream csv_file;
-        csv_file.open (filename, ios::app);
+        OutputData::ScopedFileStreamForAppend fs(std::string("JointPositionData/") + std::to_string(i) + ".csv");
+        ofstream &csv_file = fs.GetStream();
         
         if (g_bPrintID)
         {

@@ -32,7 +32,7 @@ public:
     void init();
     void beginFrame();
 
-    void glPrintString(void *font, char *str, float scale=1.0f);
+    void glPrintString(void *font, const char *str, float scale=1.0f);
     void drawSkeleton(bool isDepthView);
 
     void endFrame();

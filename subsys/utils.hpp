@@ -25,8 +25,8 @@ public:
         ss << (now->tm_year + 1900) << '-'
         << (now->tm_mon + 1) << '-'
         <<  now->tm_mday << "_"
-        << now->tm_hour << ":"
-        << now->tm_min << ":"
+        << now->tm_hour << '-'
+        << now->tm_min << '-'
         << now->tm_sec;
         PostFix = ss.str();
         

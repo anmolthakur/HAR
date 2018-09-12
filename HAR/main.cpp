@@ -66,8 +66,12 @@ Application::Application()
 
 int Application::run()
 {
+    OutputData::Init();
+    
     do
     {
+        //std::this_thread::sleep_for(std::chrono::milliseconds(33));
+        
         sensor::updateAll();
     }
     while(window::updateAll());
@@ -87,7 +91,7 @@ void Application::drawFunction(window::Layer layer)
             glLoadIdentity();
             
             rgbFeed.update(); // always update RGB even when in Depth View mode. Because we are writing RGB to the disk.
-
+            
             if (gui.getCurrentMainPanelTab() == GUIHelper::MainPanelTab::RGB)
             {
                 glOrtho(0, rgbFeed.logicalWidth(), 0, rgbFeed.logicalHeight(), -1.0, 1.0);
@@ -96,6 +100,9 @@ void Application::drawFunction(window::Layer layer)
                 {
                     ogl.drawSkeleton(false);
                 }
+                
+                rgbFeed.captureFramebuffer();
+                
                 rtt.end();
             }
             else if (gui.getCurrentMainPanelTab() == GUIHelper::MainPanelTab::DEPTH)
