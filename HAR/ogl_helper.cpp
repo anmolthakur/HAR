@@ -156,7 +156,7 @@ void OpenGLHelper::DrawPoint(xn::UserGenerator& userGenerator,
         if (joint.fConfidence < 0.5){
             if (p_x_file) {
                 ofstream &x_file = *p_x_file;
-                x_file << "[,]" << (addComma? ", " : "");
+                x_file << "[,,]" << (addComma? "; " : "");
             }
             return;
         }
@@ -179,8 +179,8 @@ void OpenGLHelper::DrawPoint(xn::UserGenerator& userGenerator,
             if (p_x_file) {
                 ofstream &x_file = *p_x_file;
 
-                x_file << "[" << pt[0].X << ", " << pt[0].Y << "]";
-                if (addComma) x_file << ", ";
+                x_file << "[" << (int)pt[0].X << ", " << (int)pt[0].Y << ", " << (int)pt[0].Z << "]";
+                if (addComma) x_file << ";";
             }
         }
         
@@ -306,11 +306,11 @@ void OpenGLHelper::handtrajectory(xn::UserGenerator& userGenerator,
     float y = ((pt_world.Y*25.4)/72)/1000;
     float z = pt_world.Z/1000;
     x_file << "\r\n";
-    x_file << x;
+    x_file << (int)x;
     x_file << ",";
-    x_file << y;
+    x_file << (int)y;
     x_file << ",";
-    x_file << z;
+    x_file << (int)z;
     depthGenerator.ConvertRealWorldToProjective(1, &pt_world, &pt_screen);
     
     History *history;
@@ -369,7 +369,7 @@ void OpenGLHelper::drawSkeletonCommon()
             g_RightHandPositionHistory.SetTarget(pt_world, pt_screen);
         }
         
-        const char *pCSVHeader = "XN_SKEL_HEAD, XN_SKEL_NECK, XN_SKEL_LEFT_SHOULDER, XN_SKEL_LEFT_ELBOW, XN_SKEL_NECK, XN_SKEL_RIGHT_SHOULDER, XN_SKEL_RIGHT_ELBOW, XN_SKEL_TORSO, XN_SKEL_LEFT_HIP, XN_SKEL_LEFT_KNEE, XN_SKEL_RIGHT_HIP, XN_SKEL_LEFT_FOOT, XN_SKEL_RIGHT_KNEE, XN_SKEL_LEFT_HIP, XN_SKEL_RIGHT_FOOT, XN_SKEL_RIGHT_HAND, XN_SKEL_LEFT_HAND";
+        const char *pCSVHeader = "XN_SKEL_HEAD; XN_SKEL_NECK; XN_SKEL_LEFT_SHOULDER; XN_SKEL_LEFT_ELBOW; XN_SKEL_NECK; XN_SKEL_RIGHT_SHOULDER; XN_SKEL_RIGHT_ELBOW; XN_SKEL_TORSO; XN_SKEL_LEFT_HIP; XN_SKEL_LEFT_KNEE; XN_SKEL_RIGHT_HIP; XN_SKEL_LEFT_FOOT; XN_SKEL_RIGHT_KNEE; XN_SKEL_LEFT_HIP; XN_SKEL_RIGHT_FOOT; XN_SKEL_RIGHT_HAND; XN_SKEL_LEFT_HAND";
         
         std::string fname = std::string("JointPositionData/") + std::to_string(aUsers[i]);
 
