@@ -43,6 +43,8 @@ public:
 //
 int main(int argc, char *argv[])
 {
+    OutputData::Init();
+
     Application app;
     return app.run();
 }
@@ -66,8 +68,6 @@ Application::Application()
 
 int Application::run()
 {
-    OutputData::Init();
-    
     do
     {
         //std::this_thread::sleep_for(std::chrono::milliseconds(33));

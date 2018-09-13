@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		0D04177B210C788E0097616D /* libboost_filesystem.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 0D04177A210C788E0097616D /* libboost_filesystem.a */; };
 		0D04177D210C7F980097616D /* libboost_system.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 0D04177C210C7F970097616D /* libboost_system.a */; };
+		0D047417214AED250007A677 /* empty.txt in CopyFiles */ = {isa = PBXBuildFile; fileRef = 0D5E92B32149CC560026C24E /* empty.txt */; };
 		0D159188209DB6CE002C4B0B /* imgui_impl_glfw_gl2.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0D159186209DB6CE002C4B0B /* imgui_impl_glfw_gl2.cpp */; };
 		0D159189209DB6CE002C4B0B /* imgui_impl_glfw_gl2.h in Headers */ = {isa = PBXBuildFile; fileRef = 0D159187209DB6CE002C4B0B /* imgui_impl_glfw_gl2.h */; };
 		0D1A07F21FC9025200C8637B /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0D1A07F11FC9025200C8637B /* main.cpp */; };
@@ -36,10 +37,7 @@
 		0D33C3581FCCA451000E3DD2 /* gui_helper.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0D33C3571FCCA451000E3DD2 /* gui_helper.cpp */; };
 		0D33C35B1FCCAB3A000E3DD2 /* utils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0D33C3591FCCAB3A000E3DD2 /* utils.cpp */; };
 		0D33C35C1FCCAB3A000E3DD2 /* utils.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 0D33C35A1FCCAB3A000E3DD2 /* utils.hpp */; };
-		0D5E92B42149CC610026C24E /* empty.txt in CopyFiles */ = {isa = PBXBuildFile; fileRef = 0D5E92B32149CC560026C24E /* empty.txt */; };
-		0D5E92B62149CC750026C24E /* empty.txt in CopyFiles */ = {isa = PBXBuildFile; fileRef = 0D5E92B32149CC560026C24E /* empty.txt */; };
 		0D5E92B82149D40A0026C24E /* libopencv_videoio.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 0D5E92B72149D40A0026C24E /* libopencv_videoio.dylib */; };
-		0D5E92BA2149D71B0026C24E /* empty.txt in CopyFiles */ = {isa = PBXBuildFile; fileRef = 0D5E92B32149CC560026C24E /* empty.txt */; };
 		0D6C25C02030DEEE00AD5607 /* libopencv_imgcodecs.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 0D6C25BF2030DEEE00AD5607 /* libopencv_imgcodecs.dylib */; };
 		0D6C25C22030DEFA00AD5607 /* libopencv_highgui.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 0D6C25C12030DEFA00AD5607 /* libopencv_highgui.dylib */; };
 		0D6C25C42030DF0600AD5607 /* libopencv_imgproc.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 0D6C25C32030DF0600AD5607 /* libopencv_imgproc.dylib */; };
@@ -68,6 +66,16 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
+		0D047416214AED170007A677 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = output;
+			dstSubfolderSpec = 16;
+			files = (
+				0D047417214AED250007A677 /* empty.txt in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		0D1A07EC1FC9025200C8637B /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 12;
@@ -80,36 +88,6 @@
 				0D1DF05820225CA80079A813 /* OpenNIConfig.xml in CopyFiles */,
 				0DF8F329209DD42100DE7FF8 /* helvetica-32.png in CopyFiles */,
 				0D71A6A720AE318A0052E1BE /* font.shader in CopyFiles */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		0D5E92B22149CC030026C24E /* CopyFiles */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = rgbFeed;
-			dstSubfolderSpec = 16;
-			files = (
-				0D5E92B42149CC610026C24E /* empty.txt in CopyFiles */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		0D5E92B52149CC660026C24E /* CopyFiles */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = rgbFeed2;
-			dstSubfolderSpec = 16;
-			files = (
-				0D5E92B62149CC750026C24E /* empty.txt in CopyFiles */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		0D5E92B92149D7150026C24E /* CopyFiles */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = JointPositionData;
-			dstSubfolderSpec = 16;
-			files = (
-				0D5E92BA2149D71B0026C24E /* empty.txt in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -354,9 +332,7 @@
 				0D1A07EA1FC9025200C8637B /* Sources */,
 				0D1A07EB1FC9025200C8637B /* Frameworks */,
 				0D1A07EC1FC9025200C8637B /* CopyFiles */,
-				0D5E92B22149CC030026C24E /* CopyFiles */,
-				0D5E92B52149CC660026C24E /* CopyFiles */,
-				0D5E92B92149D7150026C24E /* CopyFiles */,
+				0D047416214AED170007A677 /* CopyFiles */,
 			);
 			buildRules = (
 			);

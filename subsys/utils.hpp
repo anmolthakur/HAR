@@ -5,6 +5,7 @@
 #include <time.h>
 #include <string>
 #include <sstream>
+#include <boost/filesystem.hpp>
 
 // Functions
 //
@@ -31,20 +32,39 @@ public:
         PostFix = ss.str();
         
         CsvExtension = ".csv";
+        
+        OutputDir = "./output/";
+        OutputDir += PostFix;
+        
+        boost::filesystem::create_directory(OutputDir);
+        OutputDir += "/";
     }
     
     static std::string CreateCSVFilename(const std::string &basename)
     {
-        return std::string("") + basename + "_" + PostFix + CsvExtension;
+        return OutputDir + basename + CsvExtension;
     }
     
     
     class ScopedFileStreamForAppend
     {
     public:
-        ScopedFileStreamForAppend(const std::string &basename)
+        ScopedFileStreamForAppend(const std::string &basename, const std::string &header = "")
         {
-            x_file.open(OutputData::CreateCSVFilename(basename).c_str(), std::ios::app);
+            auto filename = OutputData::CreateCSVFilename(basename);
+
+            bool bFirst = false;
+            if (!boost::filesystem::exists(filename))
+            {
+                bFirst = true;
+            }
+            
+            x_file.open(filename.c_str(), std::ios::app);
+            
+            if (bFirst && !header.empty())
+            {
+                x_file << header;
+            }
         }
         ~ScopedFileStreamForAppend()
         {
@@ -58,9 +78,13 @@ public:
     };
     
     
+    static const std::string &GetOutputDir() { return OutputDir; }
+    
 private:
     static std::string PostFix;
     static std::string CsvExtension;
+    
+    static std::string OutputDir;
 };
 
 #endif /* utils_hpp */

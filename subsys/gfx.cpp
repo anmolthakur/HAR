@@ -447,15 +447,11 @@ namespace gfx
 //
     RGBFeed::RGBFeed()
     {
-        outdir_ = "./rgbFeed";
-        outdir2_ = "./rgbFeed2";
-        
-        if (!boost::filesystem::create_directory(outdir_)) {
-            return;
-        }
-        if (!boost::filesystem::create_directory(outdir2_)) {
-            return;
-        }
+        outdir_ = OutputData::GetOutputDir() +  "rgb_pre";
+        boost::filesystem::create_directory(outdir_);
+
+        outdir2_ = OutputData::GetOutputDir() +  "rgb_post";
+        boost::filesystem::create_directory(outdir2_);
     }
     
     RGBFeed::~RGBFeed()
@@ -465,6 +461,8 @@ namespace gfx
     void RGBFeed::update()
     {
         if (!sensor::initialized()) return;
+        
+        ++currentFrame_;
         
         xn::ImageMetaData imd;
         sensor::imageGenerator().GetMetaData(imd);
@@ -476,8 +474,8 @@ namespace gfx
             imgW_ = imd.XRes();
             imgH_ = imd.YRes();
             
-            video_pre.open("./rgb.mp4", -1, 25, cv::Size(imgW_, imgH_), true);
-            video_post.open("./rgb2.mp4", -1, 25, cv::Size(imgW_, imgH_), true);
+            video_pre.open(OutputData::GetOutputDir() + "rgb_pre.mp4", -1, 30, cv::Size(imgW_, imgH_), true);
+            video_post.open(OutputData::GetOutputDir() + "rgb_post.mp4", -1, 30, cv::Size(imgW_, imgH_), true);
 
             texWidth = getClosestPowerOfTwo(imd.XRes());
             texHeight = getClosestPowerOfTwo(imd.YRes());
@@ -530,11 +528,15 @@ namespace gfx
                     cv::Mat bgr_image;
                     cv::cvtColor(rgb_image, bgr_image, cv::COLOR_BGR2RGB);
                  
+                    // write to video
                     if (video_pre.isOpened()) video_pre << bgr_image;
 
-                    std::string filename = outdir_ + "/frame" + std::to_string(currentFrame_++);
-                    filename += ".jpeg";
-                    cv::imwrite(filename, bgr_image, {CV_IMWRITE_JPEG_QUALITY, jpegQualitySetting});
+                    // write a jpg frame
+                    {
+                        std::string filename = outdir_ + "/frame" + std::to_string(currentFrame_);
+                        filename += ".jpeg";
+                        cv::imwrite(filename, bgr_image, {CV_IMWRITE_JPEG_QUALITY, jpegQualitySetting});
+                    }
                 }
             }
         }
@@ -562,11 +564,15 @@ namespace gfx
             cv::Mat bgr_image;
             cv::cvtColor(rgb_image, bgr_image, cv::COLOR_BGR2RGB);
          
+            // write to video
             if (video_post.isOpened()) video_post << bgr_image;
 
-            std::string filename = outdir2_ + "/frame" + std::to_string(currentFrame_++);
-            filename += ".jpeg";
-            cv::imwrite(filename, bgr_image, {CV_IMWRITE_JPEG_QUALITY, jpegQualitySetting});
+            // write a jog frame
+            {
+                std::string filename = outdir2_ + "/frame" + std::to_string(currentFrame_);
+                filename += ".jpeg";
+                cv::imwrite(filename, bgr_image, {CV_IMWRITE_JPEG_QUALITY, jpegQualitySetting});
+            }
         }
 
     }

@@ -10,6 +10,9 @@ extern History g_LeftHandPositionHistory;
 void OpenGLHelper::init()
 {
     glClearColor(0.5, 0.5, 0.5, 0.0);
+    
+    boost::filesystem::create_directory(OutputData::GetOutputDir() + "Trajectory");
+    boost::filesystem::create_directory(OutputData::GetOutputDir() + "JointPositionData");
 }
 
 void OpenGLHelper::beginFrame()
@@ -292,19 +295,22 @@ void OpenGLHelper::handtrajectory(xn::UserGenerator& userGenerator,
     
     XnPoint3D pt_world, pt_screen;
     
-    OutputData::ScopedFileStreamForAppend fs(std::string("Trajectory_") + (eJoint == XN_SKEL_LEFT_HAND? "LeftHand" : "RightHand"));
+    const char *pCSVHeader = "X, Y, Z";
+    std::string fname = std::string("Trajectory/") + (eJoint == XN_SKEL_LEFT_HAND? "LeftHand_" : "RightHand_") + std::to_string(player);
+    
+    OutputData::ScopedFileStreamForAppend fs(fname, pCSVHeader);
     ofstream &x_file = fs.GetStream();
     
     pt_world = joint.position;
     float x = ((pt_world.X*25.4)/72)/1000;
     float y = ((pt_world.Y*25.4)/72)/1000;
     float z = pt_world.Z/1000;
+    x_file << "\r\n";
     x_file << x;
     x_file << ",";
     x_file << y;
     x_file << ",";
     x_file << z;
-    x_file << "\r\n";
     depthGenerator.ConvertRealWorldToProjective(1, &pt_world, &pt_screen);
     
     History *history;
@@ -363,7 +369,11 @@ void OpenGLHelper::drawSkeletonCommon()
             g_RightHandPositionHistory.SetTarget(pt_world, pt_screen);
         }
         
-        OutputData::ScopedFileStreamForAppend fs(std::string("JointPositionData/") + std::to_string(i) + ".csv");
+        const char *pCSVHeader = "XN_SKEL_HEAD, XN_SKEL_NECK, XN_SKEL_LEFT_SHOULDER, XN_SKEL_LEFT_ELBOW, XN_SKEL_NECK, XN_SKEL_RIGHT_SHOULDER, XN_SKEL_RIGHT_ELBOW, XN_SKEL_TORSO, XN_SKEL_LEFT_HIP, XN_SKEL_LEFT_KNEE, XN_SKEL_RIGHT_HIP, XN_SKEL_LEFT_FOOT, XN_SKEL_RIGHT_KNEE, XN_SKEL_LEFT_HIP, XN_SKEL_RIGHT_FOOT, XN_SKEL_RIGHT_HAND, XN_SKEL_LEFT_HAND";
+        
+        std::string fname = std::string("JointPositionData/") + std::to_string(aUsers[i]);
+
+        OutputData::ScopedFileStreamForAppend fs(fname, pCSVHeader);
         ofstream &csv_file = fs.GetStream();
         
         if (g_bPrintID)
@@ -420,6 +430,8 @@ void OpenGLHelper::drawSkeletonCommon()
             
             if (g_bDrawSkeleton && userGenerator.GetSkeletonCap().IsTracking(aUsers[i]))
             {
+                csv_file << "\r\n";
+                
                 DrawPoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_HEAD, 0, &csv_file);
                 
                 DrawPoint(userGenerator, depthGenerator, aUsers[i], XN_SKEL_NECK, 0, &csv_file);

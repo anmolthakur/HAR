@@ -2,6 +2,7 @@
 
 std::string OutputData::PostFix;
 std::string OutputData::CsvExtension;
+std::string OutputData::OutputDir = "./";
 
 
 unsigned int getClosestPowerOfTwo(unsigned int n)
@@ -11,4 +12,3 @@ unsigned int getClosestPowerOfTwo(unsigned int n)
     
     return m;
 }
-
